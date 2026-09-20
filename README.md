@@ -1,4 +1,4 @@
-# Baltimore Reborn
+# bmore.casa
 
 **Explore the changing landscape of Baltimore, one building at a time.**
 
@@ -43,10 +43,10 @@ uv run marimo edit notebooks/baltimore.py    # development / editing mode
 
 | Command | What it does |
 |---|---|
-| `uv run baltimore-reborn refresh` | Download every layer from ArcGIS, then rebuild Parquet, DuckDB and frontend assets |
-| `uv run baltimore-reborn download [--only permits …]` | Download only (raw batches → `data/raw/`) |
-| `uv run baltimore-reborn process` | Re-process existing raw data (no network) |
-| `uv run baltimore-reborn verify` | 30 independent checks: counts, dates, coordinates, aggregates |
+| `uv run bmore-casa refresh` | Download every layer from ArcGIS, then rebuild Parquet, DuckDB and frontend assets |
+| `uv run bmore-casa download [--only permits …]` | Download only (raw batches → `data/raw/`) |
+| `uv run bmore-casa process` | Re-process existing raw data (no network) |
+| `uv run bmore-casa verify` | 30 independent checks: counts, dates, coordinates, aggregates |
 | `bun run dev` / `bun run build && bun run start` | Development / production web app |
 | `bun run typecheck` | `tsc --noEmit` |
 | `uv run marimo run notebooks/baltimore.py` | Notebook as an interactive application |
@@ -151,7 +151,7 @@ Boundaries and parcels: Baltimore City Enterprise GIS. Basemap: [OpenFreeMap](ht
 
 ## How the pipeline works
 
-`src/baltimore_reborn/` — `download.py` → `process.py` → `verify.py`.
+`src/bmore_casa/` — `download.py` → `process.py` → `verify.py`.
 
 1. **Metadata first.** Each layer's metadata is fetched and saved (`data/raw/<layer>/metadata.json`): fields, OID field, `maxRecordCount`, spatial reference.
 2. **Count, then IDs.** `returnCountOnly` gives the API count; `returnIdsOnly` (not subject to `maxRecordCount`) gives every OBJECTID.
@@ -219,7 +219,7 @@ components/property/     Photorealistic tour, narration, recording and renovatio
 lib/data/                asset loading, statistics, fact sheet, types
 lib/property/            Record lookup, tile rewriting, camera path, recording and video tokens
 lib/geo/                 colors, layer definitions, map style + offline fallback
-src/baltimore_reborn/    Python pipeline: sources, download, process, verify, cli
+src/bmore_casa/    Python pipeline: sources, download, process, verify, cli
 notebooks/baltimore.py   marimo notebook / app
 scripts/                 copy-maplibre-worker.mjs (postinstall)
 data/raw/                raw ArcGIS batches (git-ignored, reproducible)
@@ -236,6 +236,6 @@ public/data/             frontend assets
 4. **Time machine (0:40)** — Return to full city, press **Play**. *"Watch the purple: city demolitions peak at 780 in 2019, then fall to 163 by 2025 — while green rehab permits climb to 1,253 in 2024."* Open **What is counted?**: *"And we say what this can't show: the city publishes only open notices, so this is not a replay of past vacancy."*
 5. **Compare (0:55)** — Search **Broadway East** → **Compare** → **McElderry Park**. *"Next-door neighbors: 138 demolitions per 1,000 parcels versus 10 — and nearly twice the rehab rate the other way."*
 6. **Notebook (1:10)** — Switch to the marimo app. Pick a neighborhood and drag the year slider: map, charts, ranking and the written narrative recompute. *"Same cleaned data, fully reactive, with provenance and data-quality checks — useful even without the web app."*
-7. **Close (1:25)** — *"Where does vacancy persist for a decade, where is reinvestment being recorded, and do those maps overlap? Baltimore Reborn lets any resident ask that about their own block — and shows exactly how far the public record can answer."*
+7. **Close (1:25)** — *"Where does vacancy persist for a decade, where is reinvestment being recorded, and do those maps overlap? bmore.casa lets any resident ask that about their own block — and shows exactly how far the public record can answer."*
 
 *(Optional flourish: Ask Baltimore → "How did recorded rehabilitation activity change in Oliver?" → press the speaker icon.)*

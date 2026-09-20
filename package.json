@@ -1,5 +1,5 @@
 {
-  "name": "baltimore-reborn",
+  "name": "bmore-casa",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "data:refresh": "uv run baltimore-reborn refresh",
+    "data:refresh": "uv run bmore-casa refresh",
     "notebook": "uv run marimo run notebooks/baltimore.py"
   },
   "dependencies": {

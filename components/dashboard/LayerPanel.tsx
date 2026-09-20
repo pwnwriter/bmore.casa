@@ -36,7 +36,7 @@ export default function LayerPanel(props: Props) {
     <div className="glass panel-in thin-scroll flex max-h-full flex-col overflow-y-auto rounded-2xl">
       <div className="border-b border-white/5 px-4 pb-3 pt-4">
         <div className="font-display text-[15px] font-semibold tracking-[0.18em] text-slate-50">
-          BALTIMORE <span className="text-cyan-300">REBORN</span>
+          BMORE<span className="text-cyan-300">.CASA</span>
         </div>
         <div className="mt-0.5 text-[11px] text-slate-400">Housing records from Baltimore City open data</div>
         <div className="mt-3">

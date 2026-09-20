@@ -162,7 +162,7 @@ def run(only: list[str] | None = None) -> None:
     manifest_path = RAW_DIR / "manifest.json"
     manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
 
-    with httpx.Client(timeout=httpx.Timeout(120, connect=30), headers={"User-Agent": "baltimore-reborn/0.1"}) as client:
+    with httpx.Client(timeout=httpx.Timeout(120, connect=30), headers={"User-Agent": "bmore-casa/0.1"}) as client:
         for key, layer in LAYERS.items():
             if only and key not in only:
                 continue

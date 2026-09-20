@@ -187,7 +187,7 @@ export default function Explorer() {
           <AlertTriangle className="mx-auto text-amber-300" size={28} />
           <h1 className="font-display mt-3 text-lg text-slate-50">City records could not be loaded</h1>
           <p className="mt-2 text-sm leading-relaxed text-slate-400">
-            The app reads pre-processed files from <code className="text-slate-200">public/data</code>. Generate them with <code className="text-slate-200">uv run baltimore-reborn refresh</code>, then reload.
+            The app reads pre-processed files from <code className="text-slate-200">public/data</code>. Generate them with <code className="text-slate-200">uv run bmore-casa refresh</code>, then reload.
           </p>
           <p className="mt-3 break-words text-xs text-slate-600">{error}</p>
         </div>
@@ -238,7 +238,7 @@ export default function Explorer() {
       {cleanMap && (
         <div className="panel-in absolute left-3 top-3 z-30 flex items-center gap-2 lg:left-4 lg:top-4">
           <div className="glass font-display rounded-xl px-3 py-2 text-[12px] font-semibold tracking-[0.16em] text-slate-50">
-            BALTIMORE <span className="text-cyan-300">REBORN</span>
+            BMORE<span className="text-cyan-300">.CASA</span>
           </div>
           <button onClick={() => setMapOnly(false)} className="glass flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11.5px] text-slate-200 transition hover:text-cyan-100">
             <Layers size={13} /> Show records & panels
@@ -252,7 +252,7 @@ export default function Explorer() {
           {/* mobile top bar */}
           <div className="absolute left-3 right-3 top-3 z-30 flex items-center gap-2 lg:hidden">
             <div className="glass font-display flex-1 truncate rounded-xl px-3 py-2 text-[12px] font-semibold tracking-[0.16em] text-slate-50">
-              BALTIMORE <span className="text-cyan-300">REBORN</span>
+              BMORE<span className="text-cyan-300">.CASA</span>
             </div>
             {([["layers", Layers, "Layers"], ["insight", LineChart, "Insights"]] as const).map(([key, Icon, label]) => (
               <button key={key} onClick={() => setMobilePanel((p) => (p === key ? "none" : key))} aria-label={label} aria-pressed={mobilePanel === key} className={`glass rounded-xl p-2.5 ${mobilePanel === key ? "text-cyan-200" : "text-slate-300"}`}>

@@ -24,7 +24,7 @@ function read<T>(file: string): Promise<T> {
 }
 
 interface Way { id: number; tags?: Record<string, string>; geometry?: { lon: number; lat: number }[] }
-const MAP_HEADERS = { Accept: "application/json", "User-Agent": "BaltimoreReborn/0.1 (property-study)" };
+const MAP_HEADERS = { Accept: "application/json", "User-Agent": "bmore.casa/0.1 (property-study)" };
 
 interface MapElement { type: string; id: number; lon?: number; lat?: number; nodes?: number[]; tags?: Record<string, string> }
 export function mapWays(elements: MapElement[]): Way[] {

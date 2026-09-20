@@ -10,7 +10,7 @@
 #     "pyarrow>=17",
 # ]
 # ///
-"""Baltimore Reborn - a reactive civic-data story about vacancy and reinvestment.
+"""bmore.casa - a reactive civic-data story about vacancy and reinvestment.
 
 Run from a fresh clone (the cleaned Parquet files ship with the repo):
 
@@ -27,7 +27,7 @@ import marimo
 __generated_with = "0.24.2"
 app = marimo.App(
     width="medium",
-    app_title="Baltimore Reborn - civic data notebook",
+    app_title="bmore.casa - civic data notebook",
 )
 
 
@@ -221,7 +221,7 @@ def _(
         [
             mo.md(
                 """
-                # Baltimore Reborn
+                # bmore.casa
                 ### A decade of open notices. Where should Baltimore look next?
 
                 ## Executive summary

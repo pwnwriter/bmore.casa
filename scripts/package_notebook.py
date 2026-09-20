@@ -24,11 +24,11 @@ def main() -> None:
     with ZipFile(data_archive, "w", compression=ZIP_DEFLATED) as archive:
         for name in files:
             archive.write(root / name, name)
-    submission = output / "baltimore-reborn-submission.zip"
+    submission = output / "bmore-casa-submission.zip"
     with ZipFile(submission, "w", compression=ZIP_STORED) as archive:
         archive.write(data_archive, data_archive.name)
         archive.write(root / "notebooks/baltimore.py", "baltimore.py")
-        archive.writestr("README.txt", """Baltimore Reborn — portable notebook
+        archive.writestr("README.txt", """bmore.casa — portable notebook
 
 Extract this submission ZIP first. Keep baltimore.py and baltimore-data.zip together.
 

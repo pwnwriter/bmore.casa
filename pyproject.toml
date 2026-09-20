@@ -1,5 +1,5 @@
 [project]
-name = "baltimore-reborn"
+name = "bmore-casa"
 version = "0.1.0"
 description = "Interactive 3D data visualization of Baltimore City's housing landscape, built on DHCD open data."
 readme = "README.md"
@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.scripts]
-baltimore-reborn = "baltimore_reborn.cli:main"
+bmore-casa = "bmore_casa.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.16,<0.13.0"]

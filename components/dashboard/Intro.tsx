@@ -14,7 +14,7 @@ export default function Intro({ summary, onExplore }: { summary: Summary | null;
           A civic data twin · HopHacks 2026
         </div>
         <h1 className="font-display rise mt-4 text-[clamp(2.4rem,7vw,5.6rem)] font-medium leading-[0.95] tracking-[0.08em] text-slate-50" style={{ animationDelay: "0.25s", textShadow: "0 0 60px rgba(77,214,232,0.25)" }}>
-          BALTIMORE <span className="text-cyan-300">REBORN</span>
+          BMORE<span className="text-cyan-300">.CASA</span>
         </h1>
         <p className="rise mx-auto mt-5 max-w-xl text-[clamp(0.95rem,1.6vw,1.15rem)] leading-relaxed text-slate-300" style={{ animationDelay: "0.45s" }}>
           Explore the changing landscape of Baltimore, one building at a time.

@@ -66,7 +66,7 @@ M_PER_DEG_LON = 111_320.0 * math.cos(math.radians(LAT0))
 def load_features(key: str) -> list[dict]:
     files = sorted((RAW_DIR / key).glob("batch_*.json.gz"))
     if not files:
-        raise SystemExit(f"no raw data for '{key}' - run `baltimore-reborn download` first")
+        raise SystemExit(f"no raw data for '{key}' - run `bmore-casa download` first")
     features: list[dict] = []
     for path in files:
         with gzip.open(path, "rt", encoding="utf-8") as fh:

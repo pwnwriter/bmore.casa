@@ -31,7 +31,7 @@ __pycache__/
 *.pyc
 
 # data: raw downloads and the DuckDB file are reproducible via
-# `uv run baltimore-reborn refresh`; Parquet and public/data assets are kept
+# `uv run bmore-casa refresh`; Parquet and public/data assets are kept
 # so the app and notebook run straight after a clone.
 data/raw/
 data/processed/*.duckdb

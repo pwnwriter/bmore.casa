@@ -1,10 +1,10 @@
-"""baltimore-reborn CLI: refresh = download + process."""
+"""bmore-casa CLI: refresh = download + process."""
 
 import argparse
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="baltimore-reborn", description="Baltimore Reborn data pipeline")
+    parser = argparse.ArgumentParser(prog="bmore-casa", description="bmore.casa data pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
 
     dl = sub.add_parser("download", help="download raw ArcGIS layers to data/raw/")

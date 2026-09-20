@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   try {
     facts = await buildFactSheet(asIndex(body.neighborhood), asIndex(body.compare), range);
   } catch {
-    return Response.json({ error: "Processed data is missing. Run `uv run baltimore-reborn refresh`." }, { status: 500 });
+    return Response.json({ error: "Processed data is missing. Run `uv run bmore-casa refresh`." }, { status: 500 });
   }
 
   const payload = {

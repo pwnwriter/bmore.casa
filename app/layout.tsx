@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Baltimore Reborn",
+  title: "bmore.casa",
   description:
     "Explore the changing landscape of Baltimore, one building at a time - vacant building notices, rehab permits, demolitions and building permits from Baltimore City open data.",
 };

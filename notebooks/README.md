@@ -1,4 +1,4 @@
-# Baltimore Reborn notebook
+# bmore.casa notebook
 
 The DSAI x marimo submission is `baltimore.py`. Keep it inside this repository: it reads the bundled `data/processed` and `public/data` files relative to the notebook. No API key is required. Package installation needs internet; the default visualizations use local data without a street-tile service.
 
@@ -21,7 +21,7 @@ The notebook needs seven saved data files. Sharing only the Python file does not
 Build a portable submission with `uv run python scripts/package_notebook.py`. This creates:
 
 - `dist/baltimore-data.zip`: the seven original data files, with their relative paths.
-- `dist/baltimore-reborn-submission.zip`: the notebook, data archive, and run instructions.
+- `dist/bmore-casa-submission.zip`: the notebook, data archive, and run instructions.
 
 For molab, import the updated notebook and upload `baltimore-data.zip` through the Files sidebar
 into the same folder as `notebook.py`. The notebook automatically unpacks the archive when data
@@ -65,7 +65,7 @@ After uploading the archive through Files, a new molab duplicate in the author's
 included `baltimore-data.zip` and ran all cells successfully, rendering the 11,550-notice headline
 and the analysis sections with zero reported errors. A different-account run still needs a teammate.
 
-`uv run baltimore-reborn verify` is a separate raw-download audit. It requires `data/raw/manifest.json`, which is absent in this checkout; it was not successfully revalidated in this revision. The saved quality report is provenance from the prior pipeline run, not a new independent audit.
+`uv run bmore-casa verify` is a separate raw-download audit. It requires `data/raw/manifest.json`, which is absent in this checkout; it was not successfully revalidated in this revision. The saved quality report is provenance from the prior pipeline run, not a new independent audit.
 
 ## Rubric coverage
 

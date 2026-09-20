@@ -127,7 +127,7 @@ export default function PropertyExplorer({ property, onClose }: { property: Prop
   return <dialog ref={dialog} onCancel={e => { e.preventDefault(); onClose(); }} aria-labelledby="property-title" className="fixed inset-0 m-0 h-[100dvh] max-h-none w-screen max-w-none border-0 bg-zinc-950 p-0 text-zinc-100 backdrop:bg-black">
     <div className="flex h-full flex-col">
       <header className="z-20 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-white/10 px-3 py-3 md:px-5">
-        <div className="min-w-0 flex-1"><p className="text-[10px] uppercase text-cyan-300">Baltimore Reborn / Property film</p><h2 id="property-title" className="break-words text-sm font-medium md:text-base">{record?.title ?? "Loading property"}</h2></div>
+        <div className="min-w-0 flex-1"><p className="text-[10px] uppercase text-cyan-300">bmore.casa / Property film</p><h2 id="property-title" className="break-words text-sm font-medium md:text-base">{record?.title ?? "Loading property"}</h2></div>
         <div role="group" aria-label="Property view" className="order-3 flex w-full rounded-md border border-white/15 p-1 sm:order-none sm:w-auto">
           {(["existing", "proposed"] as const).map(mode => <button key={mode} aria-pressed={view === mode} onClick={() => { pause(); setView(mode); setDetails(false); }} className={`flex-1 rounded px-4 py-1.5 text-xs ${view === mode ? "bg-zinc-200 text-zinc-950" : "text-zinc-400"}`}>{mode === "existing" ? "Existing" : "Proposed"}</button>)}
         </div>
