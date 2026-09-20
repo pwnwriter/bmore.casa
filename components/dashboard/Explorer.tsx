@@ -17,8 +17,10 @@ import { loadCityData, loadPermits } from "@/lib/data/load";
 import { describeRecord, hexFullMax, layerSeries, type YearRange } from "@/lib/data/stats";
 import type { CityData, PointSet, RecordRef } from "@/lib/data/types";
 import type { LayerKey } from "@/lib/geo/constants";
+import type { PropertyRef } from "@/lib/property/types";
 
 const CityMap = dynamic(() => import("@/components/map/CityMap"), { ssr: false });
+const PropertyExplorer = dynamic(() => import("@/components/property/PropertyExplorer"), { ssr: false });
 
 type Bbox = [number, number, number, number];
 const union = (a: Bbox, b: Bbox): Bbox => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
@@ -34,6 +36,7 @@ export default function Explorer() {
   const [compareOpen, setCompareOpen] = useState(false);
   const [compareWith, setCompareWith] = useState<number | null>(null);
   const [record, setRecord] = useState<RecordRef | null>(null);
+  const [property, setProperty] = useState<PropertyRef | null>(null);
   const [permits, setPermits] = useState<PointSet | null>(null);
   const [permitsState, setPermitsState] = useState<"idle" | "loading" | "error">("idle");
   const [camera, setCamera] = useState<CameraCommand>({ kind: "city", nonce: 0 });
@@ -168,14 +171,14 @@ export default function Explorer() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || about) return;
+      if (e.key !== "Escape" || about || property) return;
       if (mapOnly) setMapOnly(false);
       else if (record) setRecord(null);
       else if (compareOpen) setCompareOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [record, compareOpen, about, mapOnly]);
+  }, [record, compareOpen, about, mapOnly, property]);
 
   if (error) {
     return (
@@ -294,7 +297,7 @@ export default function Explorer() {
           <aside className={`absolute right-3 top-16 z-20 w-[min(380px,calc(100%-1.5rem))] flex-col gap-3 lg:right-4 lg:top-4 lg:flex lg:max-h-[calc(100%-9.5rem)] ${mobilePanel === "insight" ? "flex max-h-[calc(100%-5rem)]" : "hidden"}`}>
             {recordDetail && (
               <div className="shrink-0">
-                <RecordCard record={recordDetail} onClose={() => setRecord(null)} />
+                <RecordCard record={recordDetail} onClose={() => setRecord(null)} onExplore={() => { if (record) setProperty({ ...record, ...(record.layer === "permit" && neighborhood !== null ? { neighborhood } : {}) }); }} />
               </div>
             )}
             <div className="flex min-h-0 flex-1 flex-col">
@@ -347,6 +350,7 @@ export default function Explorer() {
       )}
 
       {about && data && <AboutModal summary={data.summary} onClose={() => setAbout(false)} />}
+      {property && <PropertyExplorer property={property} onClose={() => setProperty(null)} />}
     </main>
   );
 }

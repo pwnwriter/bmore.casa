@@ -41,3 +41,4 @@ data/processed/*.duckdb
 
 # copied from node_modules on postinstall
 public/maplibre/
+public/draco/

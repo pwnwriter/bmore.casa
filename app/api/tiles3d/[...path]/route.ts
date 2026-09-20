@@ -1,3 +1,5 @@
+import { rewriteTileset } from "@/lib/property/tiles";
+
 export const runtime = "nodejs";
 
 /**
@@ -13,7 +15,6 @@ export const runtime = "nodejs";
 
 const GOOGLE_ROOT = "https://tile.googleapis.com/v1/3dtiles";
 const ION_ASSET = 2275207;
-const PUBLIC_BASE = "/api/tiles3d";
 
 let ionKey: { key: string; expires: number } | null = null;
 
@@ -69,8 +70,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ path
 
   const type = res.headers.get("content-type") ?? "application/octet-stream";
   if (type.includes("json")) {
-    const text = (await res.text()).replaceAll('"/v1/3dtiles/', `"${PUBLIC_BASE}/`);
-    return new Response(text, { headers: { "Content-Type": "application/json", "Cache-Control": "private, max-age=300" } });
+    try {
+      return Response.json(rewriteTileset(await res.json(), upstream), { headers: { "Cache-Control": "no-store" } });
+    } catch {
+      return Response.json({ error: "The 3D provider returned an unsupported tileset." }, { status: 502 });
+    }
   }
-  return new Response(res.body, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=300" } });
+  return new Response(res.body, { headers: { "Content-Type": type, "Cache-Control": "no-store" } });
 }

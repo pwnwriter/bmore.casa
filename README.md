@@ -7,15 +7,17 @@ city demolitions and building permits — built for HopHacks 2026 on real Baltim
 
 > *How is Baltimore's housing landscape changing, and what can the city's public records tell us about different neighborhoods?*
 
-Every number in the app, the notebook and this README is computed from the downloaded records. Nothing is
-invented: no synthetic buildings, no guessed heights, no placeholder statistics.
+Housing statistics in the app, notebook and this README are computed from the downloaded records.
+The property film uses Google Photorealistic 3D Tiles for a camera tour of the real building and
+surroundings. A separate photo-based renovation film is explicitly labeled as an AI concept.
 
 | | |
 |---|---|
 | **Web app** | Next.js 16 · TypeScript · Tailwind 4 · MapLibre GL 6 · deck.gl 9 |
 | **Data pipeline** | Python 3.12+ · uv · httpx · Polars · DuckDB · Shapely |
 | **Notebook** | marimo · Plotly · DuckDB — a standalone reactive app |
-| **Optional AI** | Gemini (grounded Q&A) · ElevenLabs (reads answers aloud) |
+| **Optional AI** | Gemini (grounded Q&A and tour scripts) · Veo (renovation films) · ElevenLabs (narration) |
+| **Property film** | Three.js · NASA-AMMOS 3D Tiles Renderer · Google photogrammetry |
 | **Optional photoreal 3D** | Google Photorealistic 3D Tiles via deck.gl `Tile3DLayer` (Cesium ion token or Maps key) |
 
 ---
@@ -26,7 +28,7 @@ Processed data ships in the repo (`public/data`, `data/processed/*.parquet`), so
 
 ```bash
 # 1. web app
-bun install                 # also copies the MapLibre worker into public/ (postinstall)
+bun install                 # also copies the MapLibre worker and Draco decoders (postinstall)
 bun run dev                 # http://localhost:3000
 
 # 2. marimo notebook
@@ -57,12 +59,48 @@ A full refresh downloads ~322k records and takes about two minutes.
 Create `.env` (git-ignored) — both keys stay on the server and are never sent to the browser:
 
 ```bash
-GEMINI_API_KEY=...        # enables "Ask Baltimore"
-ELEVENLABS_API_KEY=...    # enables the read-aloud button on answers
-# optional: GEMINI_MODEL, ELEVENLABS_VOICE_ID, ELEVENLABS_MODEL_ID
+GEMINI_API_KEY=...        # enables "Ask Baltimore", tour scripts and Veo renovation films
+ELEVENLABS_API_KEY=...    # enables answer and property narration
+# optional: GEMINI_MODEL, GEMINI_PROPERTY_MODEL, GEMINI_VIDEO_MODEL,
+#           ELEVENLABS_VOICE_ID, ELEVENLABS_MODEL_ID
 ```
 
 Without keys those two controls report that they are unconfigured; everything else works.
+
+### Property films: existing and proposed
+
+Select a property record, then **Explore building in 3D**. **Existing** opens a full-screen textured
+3D view using the same imagery source as God's Eye View. A 36-second camera path approaches the record
+coordinate, orbits it, then pulls back to the neighborhood. Play/pause, scrub, reset, and manual orbit
+controls are available. A Cesium ion token or Google Maps key is required (see below).
+
+**Generate narration** asks Gemini for a script grounded only in the server-resolved public record,
+then uses ElevenLabs for speech. The transcript is in Property details. **Record tour** captures the
+camera sequence and optional narration; **Download film** saves WebM or MP4 depending on browser
+support. Google attribution remains visible in the viewer and recording. Keep the tab visible while
+recording; manual navigation, changing views, or hiding the tab pauses capture.
+
+**Proposed** accepts a property photo you own or have permission to use (JPEG/PNG, up to 8 MB) and an
+exterior renovation brief. Veo generates an 8-second, 720p concept video with realistic camera motion.
+It is not an editable 3D model or evidence of an actual renovation. Google tile imagery is not used
+as an AI reference. Generation requires Veo access and available billing/quota on the Gemini key.
+Pending and completed operation tokens persist in this browser tab for up to 11 hours, so reopening
+the same property can resume polling. A newly selected photo replaces that saved session.
+
+`GET /api/property/record` resolves a validated local record reference. `POST /api/property/story`
+generates its script; `POST /api/property/video` starts a photo-based job and `GET` polls or streams
+the result using an expiring, signed token. API keys stay server-side. Defaults are
+`gemini-3.6-flash` (with a fallback) and `veo-3.1-fast-generate-preview`; override with
+`GEMINI_PROPERTY_MODEL` and `GEMINI_VIDEO_MODEL`. Provider errors are shown without inventing output.
+
+Imagery has variable capture dates and resolution. The coordinate is not a verified parcel/building
+match. Neither aerial imagery nor records establish current condition, interiors, structural
+capacity, or renovation feasibility. The older schematic OSM endpoint remains available at
+`/api/property` but is not used by the property film.
+
+Run `bun test lib/property` for reference, geometry, tile-proxy, camera-path and video API tests.
+Before a public deployment, add authentication, usage limits and an upload-size limit at the reverse
+proxy: the AI endpoints consume the server account's quota and are intended for a local/demo app.
 
 ### Optional photorealistic 3D city
 
@@ -76,7 +114,7 @@ CESIUM_ION_TOKEN=...       # free for non-commercial use: cesium.com/ion -> Asse
 GOOGLE_MAPS_API_KEY=...    # or: a Maps Platform key with the "Map Tiles API" enabled (billing, metered)
 ```
 
-(`CESIUM_API_KEY` is accepted as an alias.) Tiles are fetched through `/api/tiles3d/*`, a streaming server-side proxy, so the key never reaches the browser and
+(`CESIUM_API_KEY` and `CECIUM_API_KEY` are accepted as aliases.) Tiles are fetched through `/api/tiles3d/*`, a streaming server-side proxy, so the key never reaches the browser and
 nothing is stored. With no key the toggle is disabled and the rest of the app is unaffected. (A Gemini / AI Studio key
 does **not** work here — Google rejects it for the Map Tiles API.)
 
@@ -167,7 +205,8 @@ These are descriptive. The records do not establish *why* places differ or chang
 - **Search** — addresses across notices/rehabs/demolitions (plus the selected neighborhood's permits) and neighborhood names.
 - **Ask Baltimore** *(optional)* — the server computes a fact sheet for the current scope and year range; Gemini may only use those numbers, must name metric/place/period, and must refuse causal or "is this building vacant today" questions. Falls through to older models if one is overloaded.
 
-**Why no React Three Fiber?** The brief asked to avoid stacking redundant WebGL contexts. MapLibre + deck.gl already delivers the pitched, georeferenced 3D scene — including the optional photorealistic mesh — in a single context, so R3F would have added weight without adding meaning.
+The city map uses MapLibre + deck.gl. The property film loads Three.js and 3D Tiles Renderer on demand
+and disposes its renderer when closed; it does not use React Three Fiber.
 
 ## Project structure
 
@@ -176,7 +215,9 @@ app/                     Next.js App Router (page, layout, /api/ask, /api/speak,
 components/map/          CityMap - MapLibre + deck.gl overlay
 components/dashboard/    Explorer, panels, timeline, search, record card, Ask Baltimore
 components/charts/       YearBars (SVG)
+components/property/     Photorealistic tour, narration, recording and renovation video
 lib/data/                asset loading, statistics, fact sheet, types
+lib/property/            Record lookup, tile rewriting, camera path, recording and video tokens
 lib/geo/                 colors, layer definitions, map style + offline fallback
 src/baltimore_reborn/    Python pipeline: sources, download, process, verify, cli
 notebooks/baltimore.py   marimo notebook / app

@@ -11,3 +11,7 @@ const to = join(root, "public", "maplibre");
 mkdirSync(to, { recursive: true });
 for (const file of ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"]) copyFileSync(join(from, file), join(to, file));
 console.log("maplibre worker copied to public/maplibre");
+const dracoFrom = join(root, "node_modules", "three", "examples", "jsm", "libs", "draco", "gltf");
+const dracoTo = join(root, "public", "draco");
+mkdirSync(dracoTo, { recursive: true });
+for (const file of ["draco_decoder.wasm", "draco_wasm_wrapper.js", "draco_decoder.js"]) copyFileSync(join(dracoFrom, file), join(dracoTo, file));
