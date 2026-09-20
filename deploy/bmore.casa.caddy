@@ -1,0 +1,14 @@
+# /etc/caddy/conf.d/bmore.casa.caddy - web app on :3003, marimo notebook on :2718 under /notebook.
+# marimo is started with --base-url /notebook, so the prefix is passed through, not stripped.
+# Caddy proxies the notebook's WebSocket without extra configuration.
+bmore.casa {
+	import cf
+
+	handle /notebook* {
+		reverse_proxy 127.0.0.1:2718
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3003
+	}
+}
