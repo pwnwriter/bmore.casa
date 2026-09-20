@@ -17,7 +17,9 @@ Run from a fresh clone (the cleaned Parquet files ship with the repo):
     uvx marimo run --sandbox notebooks/baltimore.py     # read it as an app
     uvx marimo edit --sandbox notebooks/baltimore.py    # read it with the code
 
-No API keys and no network access are needed.
+For a standalone copy or molab fork, upload baltimore-data.zip beside this file.
+The notebook unpacks the bundled snapshot automatically. No API keys are needed;
+internet is only needed to install packages or enable the optional street basemap.
 """
 
 import marimo
@@ -48,28 +50,51 @@ def _():
 
 @app.cell
 def _(json, mo, pl):
-    ROOT = mo.notebook_dir()
-    if not (ROOT / "data" / "processed").exists():
-        ROOT = ROOT.parent
-    PROCESSED = ROOT / "data" / "processed"
-    PUBLIC = ROOT / "public" / "data"
+    from zipfile import BadZipFile as _BadZipFile, ZipFile as _ZipFile
 
-    # Every file read below is checked first, so a missing file is a message, never a traceback.
+    _notebook_dir = mo.notebook_dir()
     _required = [
-        PROCESSED / "events.parquet",
-        PROCESSED / "neighborhoods.parquet",
-        PROCESSED / "vacant_open.parquet",
-        PROCESSED / "permits.parquet",
-        PROCESSED / "quality_report.json",
-        PUBLIC / "summary.json",
-        PUBLIC / "neighborhoods.geojson",
+        "data/processed/events.parquet",
+        "data/processed/neighborhoods.parquet",
+        "data/processed/vacant_open.parquet",
+        "data/processed/permits.parquet",
+        "data/processed/quality_report.json",
+        "public/data/summary.json",
+        "public/data/neighborhoods.geojson",
     ]
-    _missing = [str(p.relative_to(ROOT)) for p in _required if not p.exists()]
+    ROOT = next(
+        (_root for _root in (_notebook_dir, _notebook_dir.parent)
+         if all((_root / _name).is_file() for _name in _required)),
+        _notebook_dir,
+    )
+    _missing = [_name for _name in _required if not (ROOT / _name).is_file()]
+    _archive = _notebook_dir / "baltimore-data.zip"
+    _archive_error = ""
+    if _missing and _archive.is_file():
+        try:
+            with _ZipFile(_archive) as _bundle:
+                # Read the complete snapshot first; extract only the seven known data paths.
+                _contents = {_name: _bundle.read(_name) for _name in _required}
+            for _name, _content in _contents.items():
+                _destination = ROOT / _name
+                _destination.parent.mkdir(parents=True, exist_ok=True)
+                _destination.write_bytes(_content)
+        except (_BadZipFile, KeyError, OSError) as _error:
+            _archive_error = f"\n\nThe data archive could not be unpacked: `{_error}`. Re-upload the original archive and rerun."
+        _missing = [_name for _name in _required if not (ROOT / _name).is_file()]
     mo.stop(
-        bool(_missing),
-        mo.callout(mo.md(f"**Processed data not found:** `{'`, `'.join(_missing)}`\n\nRun `uv run baltimore-reborn refresh` from the project root, then re-run this notebook."), kind="danger"),
+        bool(_missing) or bool(_archive_error),
+        mo.callout(mo.md(
+            "**Notebook data is missing.** Upload **`baltimore-data.zip`** through molab's Files sidebar "
+            "into the same folder as this notebook, then rerun. The notebook will unpack it automatically. "
+            "For a local run, keep the archive beside the notebook or use the full repository. "
+            "No account secrets or API keys are required."
+            + _archive_error
+        ), kind="danger"),
     )
 
+    PROCESSED = ROOT / "data" / "processed"
+    PUBLIC = ROOT / "public" / "data"
     events = pl.read_parquet(PROCESSED / "events.parquet")
     hoods = pl.read_parquet(PROCESSED / "neighborhoods.parquet")
     vacant = pl.read_parquet(PROCESSED / "vacant_open.parquet")
@@ -320,7 +345,6 @@ def _(OPEN_BALTIMORE, mo, pl, quality, summary):
         ]
     )
     return
-
 
 
 @app.cell
@@ -703,9 +727,9 @@ def _(
     make_subplots,
     mo,
     pl,
+    summary,
     year_from,
     year_to,
-    summary,
 ):
     _names = {"vacant": ACTIVITY["vacant"], "rehab": ACTIVITY["rehab"], "demolition": ACTIVITY["demolition"], "permit": ("Building permits (all categories)", "#f5b041")}
     _pair = [compare_a.value, compare_b.value]
