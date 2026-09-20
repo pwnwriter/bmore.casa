@@ -1,9 +1,11 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
-#     "marimo>=0.24",
+#     "marimo>=0.24.2,<0.25",
 #     "duckdb>=1.1",
-#     "plotly>=5.24",
+#     "plotly>=6,<8",
+#     "anywidget>=0.9,<0.10",
+#     "traitlets>=5.14,<6",
 #     "polars>=1.9",
 #     "pyarrow>=17",
 # ]
@@ -30,6 +32,10 @@ app = marimo.App(
 @app.cell
 def _():
     import json
+    from datetime import date
+
+    import anywidget
+    import traitlets
 
     import duckdb
     import marimo as mo
@@ -37,12 +43,14 @@ def _():
     import polars as pl
     from plotly.subplots import make_subplots
 
-    return duckdb, go, json, make_subplots, mo, pl
+    return anywidget, date, duckdb, go, json, make_subplots, mo, pl, traitlets
 
 
 @app.cell
 def _(json, mo, pl):
-    ROOT = mo.notebook_dir().parent
+    ROOT = mo.notebook_dir()
+    if not (ROOT / "data" / "processed").exists():
+        ROOT = ROOT.parent
     PROCESSED = ROOT / "data" / "processed"
     PUBLIC = ROOT / "public" / "data"
 
@@ -104,14 +112,14 @@ def _():
 
 
 @app.cell
-def _(events, permits, pl, summary, vacant):
+def _(date, events, permits, pl, summary, vacant):
     def yearly(activity_type: str) -> pl.DataFrame:
         """Records per year for one activity type, oldest year first."""
         return events.filter(pl.col("activity_type") == activity_type).group_by("year").agg(pl.len().alias("n")).sort("year")
 
     def headline_metrics() -> dict:
         """City-wide figures quoted in the prose. Computed once, so no number is typed by hand."""
-        last_full = summary["yearRange"][1] - 1  # the final year is still in progress
+        last_full = date.fromisoformat(summary["generatedAt"][:10]).year - 1
         by_hood = vacant.group_by("neighborhood").agg(pl.len().alias("n")).sort("n", descending=True)
         demo, rehab = yearly("demolition"), yearly("rehab")
         demo_peak_year, demo_peak = demo.sort("n", descending=True).row(0)
@@ -162,7 +170,7 @@ def _(
 
     _fig = make_subplots(
         rows=1, cols=2, horizontal_spacing=0.1,
-        subplot_titles=["Today's open vacancy notices, by the year they were issued", "The city's response: demolitions vs. rehab permits"],
+        subplot_titles=["Open notices in the snapshot, by issue year", "Recorded activity: demolitions and rehab permits"],
     )
     _age = vacant.group_by("year").len().sort("year")
     _fig.add_trace(
@@ -189,29 +197,29 @@ def _(
             mo.md(
                 """
                 # Baltimore Reborn
-                ### Where vacancy persists, where reinvestment is recorded - and how far the city's own records can take us
+                ### A decade of open notices. Where should Baltimore look next?
 
                 ## Executive summary
                 """
             ),
             mo.hstack(
                 [
-                    mo.stat(value=f"{_h['open']:,}", label="open vacant building notices", caption="city-wide, today", bordered=True),
+                    mo.stat(value=f"{_h['open']:,}", label="open vacant building notices", caption="city-wide, saved snapshot", bordered=True),
                     mo.stat(value=f"{_h['old'] / _h['open']:.0%}", label="issued before 2016", caption=f"oldest: {_h['oldest']}", bordered=True),
                     mo.stat(value=f"{_h['top10_share']:.0%}", label="sit in just 10 neighborhoods", caption=f"of {_h['n_hoods']}; {_h['hoods_without']} have none", bordered=True),
-                    mo.stat(value=f"{_h['relapsed']:,}", label="parcels vacant again", caption="open notice issued after a rehab permit", bordered=True),
+                    mo.stat(value=f"{_h['relapsed']:,}", label="notices after a rehab permit", caption="open notice issued after a rehab permit", bordered=True),
                 ],
                 widths="equal", gap=1,
             ),
             mo.md(
                 f"""
-                We joined **six Open Baltimore datasets** on the city's parcel ID to ask one question: *is reinvestment reaching the places where vacancy has lasted longest?*
+                We combined **six Open Baltimore datasets**, linking housing records by parcel ID and locating them within neighborhood boundaries, to ask one question: *is reinvestment reaching the places where vacancy has lasted longest?*
 
-                - **Vacancy is old and concentrated.** {_h['old']:,} of today's open notices have been open for a decade or more (solid bars), and 10 of {_h['n_hoods']} neighborhoods hold {_h['top10_share']:.0%} of them.
+                - **Vacancy is old and concentrated.** {_h['old']:,} open notices were issued before 2016 (solid bars), and 10 of {_h['n_hoods']} neighborhoods hold {_h['top10_share']:.0%} of them.
                 - **The response changed shape.** City demolitions peaked at {_h['demo_peak']:,} in {_h['demo_peak_year']} and fell to {_h['demo_last']:,} in {_h['last_full']}, while rehab permits on vacant buildings rose to {_h['rehab_peak']:,} in {_h['rehab_peak_year']}.
                 - **A permit is not an ending.** {_h['relapsed']:,} parcels carry an open notice issued *after* their rehab permit.
 
-                Every number here is computed live from the data. Scroll to **Core visualization** to test these claims on any neighborhood.
+                **Try it in five minutes:** change the notice-age cutoff → explore a neighborhood → compare two places → read the synthesis. All findings are computed from the bundled snapshot; no website or API key is needed.
                 """
             ),
             _fig,
@@ -225,10 +233,9 @@ def _(mo):
     mo.md("""
     ## Problem statement
 
-    Baltimore has fought vacancy with a succession of programs - *Vacants to Value* (2010), the state-funded
-    *Project C.O.R.E.* demolitions (2016) and the $3 billion vacant-housing plan announced in 2023 - and
-    [BNIA-JFI's Vital Signs](https://bniajfi.org/) tracks neighborhood indicators year by year. But the city's raw
-    records sit in separate layers: notices in one, rehab permits in another, demolitions and building permits in two more.
+    The city's public housing records sit in separate layers: notices in one, rehab permits in another,
+    demolitions and building permits in two more. Neighborhood summaries such as
+    [BNIA-JFI's Vital Signs](https://bniajfi.org/) provide useful context; this notebook makes the underlying parcel records explorable.
     A resident cannot easily ask the obvious question of their own block:
 
     > **Where has vacancy lasted a decade or more, where is reinvestment being recorded, and do those two maps overlap?**
@@ -286,12 +293,16 @@ def _(OPEN_BALTIMORE, mo, pl, quality, summary):
 
                 Six layers, all published on [Open Baltimore](https://data.baltimorecity.gov/): {_links}.
 
+                **Snapshot processed {summary['generatedAt'][:10]} (UTC).** These are saved extracts, not a live city feed.
+                **Five-minute route:** read the summary, try the notice-age explorer, inspect one neighborhood on the map, then read the synthesis.
+                Methods and data-quality details are expandable.
+
                 Four are event records (below); the neighborhood boundaries ({summary['neighborhoods']['count']} polygons) place each record, and the
                 {summary['parcels']['total_parcels']:,} real-property parcels are the denominator for every rate. The pipeline refuses to continue
                 unless the rows downloaded equal the count the city's API reports.
                 """
             ),
-            mo.ui.table(pl.DataFrame(_rows), selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False),
+            mo.accordion({"Source inventory: dates, counts and parcel coverage": mo.ui.table(pl.DataFrame(_rows), selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False)}),
             mo.callout(
                 mo.md(
                     f"**The sources observe different periods.** Notices reach back to {_ds['vacant']['dateRange'][0][:4]} - but only notices that are *still open* exist in the data. "
@@ -303,11 +314,114 @@ def _(OPEN_BALTIMORE, mo, pl, quality, summary):
             mo.accordion(
                 {
                     "What each metric counts": _definitions,
-                    "Cleaning checks, layer by layer": mo.ui.table(_quality, selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False),
+                    "Saved pipeline quality report": mo.vstack([mo.md("These checks were saved by the extraction pipeline. They are not a fresh audit of the city API; the raw-download manifest is not included in this notebook bundle."), mo.ui.table(_quality, selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False)]),
                 }
             ),
         ]
     )
+    return
+
+
+
+@app.cell
+def _(anywidget, traitlets):
+    class NoticeCohort(anywidget.AnyWidget):
+        """A keyboard-accessible distribution whose bars select an issue-year cutoff."""
+
+        cutoff = traitlets.Int(2015).tag(sync=True)
+        cohorts = traitlets.List().tag(sync=True)
+        _esm = """
+        export function render({model, el}) {
+          const root = document.createElement('div');
+          root.className = 'notice-cohort';
+          const label = document.createElement('p');
+          const bars = document.createElement('div');
+          bars.className = 'cohort-bars';
+          const draw = () => {
+            const cutoff = model.get('cutoff');
+            const rows = model.get('cohorts');
+            const max = Math.max(1, ...rows.map(r => r.count));
+            label.textContent = `Notices issued through ${cutoff} · click a year to change the cohort`;
+            bars.replaceChildren();
+            for (const row of rows) {
+              const button = document.createElement('button');
+              button.type = 'button';
+              button.setAttribute('aria-label', `Through ${row.year}: select notice cohort`);
+              button.setAttribute('aria-pressed', String(row.year <= cutoff));
+              button.title = `${row.year}: ${row.count.toLocaleString()} open notices`;
+              const bar = document.createElement('span');
+              bar.className = 'cohort-bar';
+              bar.style.height = `${Math.max(3, row.count / max * 90)}px`;
+              const year = document.createElement('span');
+              year.textContent = String(row.year).slice(2);
+              button.append(bar, year);
+              button.onclick = () => { model.set('cutoff', row.year); model.save_changes(); };
+              bars.append(button);
+            }
+          };
+          root.append(label, bars);
+          el.append(root);
+          model.on('change:cutoff', draw);
+          model.on('change:cohorts', draw);
+          draw();
+          return () => { model.off('change:cutoff', draw); model.off('change:cohorts', draw); root.remove(); };
+        }
+        """
+        _css = """
+        .notice-cohort { background:#0a1020; color:#dce8ef; border:1px solid #294058;
+          border-radius:12px; padding:16px; font:14px system-ui; }
+        .notice-cohort p { margin:0 0 12px; }
+        .cohort-bars { display:flex; align-items:end; gap:3px; overflow-x:auto; }
+        .cohort-bars button { flex:1; min-width:24px; display:flex; flex-direction:column;
+          justify-content:end; gap:8px; align-items:center; height:125px;
+          background:transparent; color:#dce8ef; border:0; padding:3px; cursor:pointer; }
+        .cohort-bars button:focus-visible { outline:2px solid #7be7f5; border-radius:4px; }
+        .cohort-bar { display:block; width:100%; background:#334155; border-radius:3px 3px 0 0; }
+        .cohort-bars button[aria-pressed=true] .cohort-bar { background:#ff7061; }
+        """
+
+    return (NoticeCohort,)
+
+
+@app.cell(hide_code=True)
+def _(NoticeCohort, mo, pl, vacant):
+    _cohorts = vacant.group_by("year").agg(pl.len().alias("count")).sort("year")
+    notice_cohort = mo.ui.anywidget(NoticeCohort(cohorts=_cohorts.to_dicts()))
+    mo.vstack([
+        mo.md("""
+        ### How much of the open-notice list is older?
+
+        **Start here:** the coral bars select notices issued through a cutoff year. Click **15** for notices issued through 2015,
+        then **20** to broaden the cohort. The neighborhood chart and downloadable records below react together.
+        Bar height is the number of currently open notices issued in that year; this is not a historical vacancy count.
+        This city-wide explorer has its own cutoff, independent of the map filters below.
+        """),
+        notice_cohort,
+    ])
+    return (notice_cohort,)
+
+
+@app.cell(hide_code=True)
+def _(DARK, GRID, go, mo, notice_cohort, pl, vacant):
+    _cutoff = int(notice_cohort.cutoff)
+    _cohort = vacant.filter(pl.col("year") <= _cutoff)
+    _counts = _cohort.group_by("neighborhood").agg(pl.len().alias("notices")).sort("notices", descending=True)
+    _top = _counts.head(10).sort("notices")
+    _fig = go.Figure(go.Bar(
+        x=_top["notices"].to_list(), y=_top["neighborhood"].to_list(), orientation="h",
+        marker_color="#ff7061", hovertemplate="%{y}: %{x:,} open notices<extra></extra>",
+    ))
+    _fig.update_layout(height=360, margin=dict(l=15, r=20, t=15, b=40),
+        xaxis=dict(title="Open notices issued through the cutoff year", gridcolor=GRID), **DARK)
+    mo.vstack([
+        mo.md(f"**{_cohort.height:,} notices ({_cohort.height / vacant.height:.1%} of the snapshot)** were issued through {_cutoff}, across {_counts.height} neighborhoods. The chart shows the ten largest counts, not rates or a funding priority score."),
+        _fig,
+        mo.accordion({"Inspect or download this notice cohort": mo.ui.table(
+            _cohort.select("notice_date", "address", "neighborhood", "blocklot", "rehab_issue_date")
+            .sort("notice_date"), selection=None, page_size=8, show_column_summaries=False,
+        )}),
+        mo.md("**Use this to frame a question:** what has kept these notices open? Inspection records and resident knowledge are needed to explain the administrative record."),
+    ])
     return
 
 
@@ -329,8 +443,8 @@ def _(mo, pick_hoods, pick_types, pick_years, street_basemap):
                 """
                 ## Core visualization
 
-                Pick neighborhoods (none = the whole city), activity categories and a date window - the headline counts, map, timeline, ranking and record table all
-                recompute. Try **Broadway East** or **Carrollton Ridge**, then drag the years to 2004-2015 to see only the decade-old notices.
+                Pick neighborhoods (none = the whole city), activity categories and a date window. The selection counts, map dots, timeline and record table recompute.
+                Map shading stays city-wide for context; the ranking and synthesis use the date window across all neighborhoods and categories. Try **Broadway East** or **Carrollton Ridge**, then drag the years to 2004-2015 to inspect older records; select only open notices to isolate the vacancy cohort.
                 """
             ),
             mo.hstack([pick_hoods, pick_types], widths=[1, 1], gap=2),
@@ -527,7 +641,7 @@ def _(
             _fig,
             mo.md(
                 f"_Each bar counts records by their own date: notice issued, permit issued, demolition finished. **This is not a reconstruction of past vacancy** - "
-                f"the vacancy source only contains notices still open today, so older years show only the notices that have never been resolved. {_partial} is a partial year, and the city's permit system changed in early 2025._"
+                f"the vacancy source only contains notices still open in the snapshot, so older years show notices currently marked open; intervening status changes are not observed. {_partial} is a partial year, and the city's permit system changed in early 2025._"
             ),
         ]
     )
@@ -591,6 +705,7 @@ def _(
     pl,
     year_from,
     year_to,
+    summary,
 ):
     _names = {"vacant": ACTIVITY["vacant"], "rehab": ACTIVITY["rehab"], "demolition": ACTIVITY["demolition"], "permit": ("Building permits (all categories)", "#f5b041")}
     _pair = [compare_a.value, compare_b.value]
@@ -604,8 +719,10 @@ def _(
         _row = {"Metric": _label}
         for _h in _pair:
             _n = _ev.filter((pl.col("neighborhood") == _h) & (pl.col("layer") == _layer)).height
-            _row[f"{_h} - records"] = _n
-            _row[f"{_h} - per 1k parcels"] = round(1000 * _n / _parcels[_h], 1) if _parcels.get(_h) else None
+            _dates = summary["datasets"][_layer]["dateRange"]
+            _observed = year_to >= int(_dates[0][:4]) and year_from <= int(_dates[1][:4])
+            _row[f"{_h} - records"] = _n if _observed else None
+            _row[f"{_h} - per 1k parcels"] = round(1000 * _n / _parcels[_h], 1) if _observed and _parcels.get(_h) else None
         _table.append(_row)
 
     _fig = make_subplots(rows=2, cols=2, subplot_titles=[v[0] for v in _names.values()], vertical_spacing=0.16, horizontal_spacing=0.08)
@@ -614,8 +731,8 @@ def _(
         for _j, _h in enumerate(_pair):
             _s = dict(_ev.filter((pl.col("neighborhood") == _h) & (pl.col("layer") == _layer)).group_by("year").agg(pl.len()).rows())
             _fig.add_trace(
-                go.Scatter(x=_years, y=[_s.get(y, 0) for y in _years], mode="lines+markers", name=_h, legendgroup=_h, showlegend=_i == 0,
-                           line=dict(color="#7be7f5" if _j == 0 else "#f0c987", width=2), marker=dict(size=5), hovertemplate="%{x}: %{y:,}<extra>" + _h + "</extra>"),
+                go.Scatter(x=_years, y=[1000 * _s.get(y, 0) / _parcels[_h] if _parcels.get(_h) and int(summary["datasets"][_layer]["dateRange"][0][:4]) <= y <= int(summary["datasets"][_layer]["dateRange"][1][:4]) else None for y in _years], mode="lines+markers", name=_h, legendgroup=_h, showlegend=_i == 0,
+                           line=dict(color="#7be7f5" if _j == 0 else "#f0c987", width=2), marker=dict(size=5), hovertemplate="%{x}: %{y:.1f} records / 1,000 parcels<extra>" + _h + "</extra>"),
                 row=_i // 2 + 1, col=_i % 2 + 1,
             )
     _fig.update_layout(height=520, margin=dict(l=40, r=20, t=60, b=30), legend=dict(orientation="h", y=1.13, font=dict(size=12)), **DARK)
@@ -626,13 +743,13 @@ def _(
     _same = compare_a.value == compare_b.value
     mo.vstack(
         [
-            mo.md("### Compare two neighborhoods"),
+            mo.md("### Compare two neighborhoods fairly\nEach chart shows records per 1,000 parcels, so neighborhood size does not drive the comparison."),
             mo.hstack([compare_a, compare_b], justify="start", gap=2),
             mo.callout("Pick two different neighborhoods to compare.", kind="warn") if _same else mo.ui.table(pl.DataFrame(_table), selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False),
             _fig,
             mo.md(
                 f"_Records dated {year_from}-{year_to}. Rates divide by each neighborhood's parcel count ({_parcels.get(_pair[0], 0):,} vs {_parcels.get(_pair[1], 0):,}) - they are rates of **records**, and a parcel can have many permits. "
-                "Lines start where each source starts (demolitions 2011, rehab 2015, permits 2019). Differences are descriptive: these records cannot say *why* two places differ._"
+                "Gaps and blank table values mean the source does not cover that period. Lines start where each source starts (demolitions 2011, rehab 2015, permits 2019). Differences are descriptive: these records cannot say *why* two places differ._"
             ),
         ]
     )
@@ -643,6 +760,7 @@ def _(
 def _(ACTIVITY, DARK, GRID, go, headline, mo, pl, ranking, year_from, year_to):
     _h = headline
     _top = ranking.row(0, named=True)
+    _rank_text = (f"{_top['neighborhood']} ranks first with {_top['open_notices_per_1k_parcels']:,.0f} open notices per 1,000 parcels" if _top["open_notices"] > 0 else "no open notices have dates in this window; there is no leading neighborhood")
 
     # Do the two maps overlap? One dot per neighborhood, inside the selected window.
     _rho = ranking.select(pl.corr("open_notices_per_1k_parcels", "rehab_per_1k_parcels", method="spearman")).item()
@@ -656,7 +774,7 @@ def _(ACTIVITY, DARK, GRID, go, headline, mo, pl, ranking, year_from, year_to):
         )
     )
     _fig.update_layout(
-        height=340, margin=dict(l=55, r=20, t=40, b=45), title=dict(text=f"Rehab permits follow vacancy - up to a point · {year_from}-{year_to} · {_rho_text}", font=dict(size=13)),
+        height=340, margin=dict(l=55, r=20, t=40, b=45), title=dict(text=f"Vacancy and recorded rehab activity · {year_from}-{year_to} · {_rho_text}", font=dict(size=13)),
         xaxis=dict(title="open notices per 1,000 parcels", gridcolor=GRID, zerolinecolor=GRID, rangemode="tozero"),
         yaxis=dict(title="rehab permits per 1,000 parcels", gridcolor=GRID, zerolinecolor=GRID, rangemode="tozero"), **DARK,
     )
@@ -665,32 +783,21 @@ def _(ACTIVITY, DARK, GRID, go, headline, mo, pl, ranking, year_from, year_to):
         f"""
         ## Insight synthesis
 
-        **1 · Vacancy in Baltimore is old, and it is concentrated.** Of **{_h['open']:,} open notices**, {_h['old']:,} ({_h['old'] / _h['open']:.0%}) were issued
-        before 2016 - the oldest on {_h['oldest']} - while {_h['recent']:,} ({_h['recent'] / _h['open']:.0%}) date from 2022 or later. Ten of {_h['n_hoods']} neighborhoods,
-        led by {_h['top_hood']}, hold {_h['top10_share']:.0%} of all open notices; {_h['hoods_without']} neighborhoods have none. In the window you selected
-        ({year_from}-{year_to}), **{_top['neighborhood']}** ranks first with {_top['open_notices_per_1k_parcels']:,.0f} open notices per 1,000 parcels.
+        **Where to investigate:** in your selected window ({year_from}-{year_to}), {_rank_text}.
+        Ranking uses neighborhoods with at least 100 parcels to reduce the instability of tiny denominators.
 
-        **2 · The city's response has changed shape.** Completed city demolitions peak at **{_h['demo_peak']:,} in {_h['demo_peak_year']}** and fall to {_h['demo_last']:,}
-        in {_h['last_full']}. Rehab permits on vacant buildings move the other way: from {_h['rehab_first']:,} in {_h['rehab_first_year']} to **{_h['rehab_peak']:,} in {_h['rehab_peak_year']}**.
-        The records show *that* the balance shifted from removal to reuse; they do not explain why.
+        **Does recorded rehab overlap with vacancy?** Each dot below is one neighborhood ({_rho_text}).
+        Hover to find places with similar notice rates but different rehab activity. The rehab source itself is limited
+        to buildings with vacancy notices, and both axes share a parcel denominator: this association cannot establish an intervention's effect.
 
-        **3 · A permit is not an ending.** Matching on the parcel ID (`BLOCKLOT`), **{_h['relapsed']:,} parcels** have a rehab permit issued *before* the vacancy
-        notice that is open today - buildings that were on a path back into use and are vacant again. The data cannot say whether those rehabs were ever finished;
-        it can say exactly where to go and look.
-
-        **4 · Permits are not buildings.** {_h['permit_records']:,} permit records touch only {_h['permit_parcels']:,} distinct parcels, and {_h['permit_mods']:,} are
-        modifications of an earlier permit - which is why every rate above is labelled *records per 1,000 parcels*.
-
-        **5 · The two maps overlap - up to a point.** Each dot below is a neighborhood: where open notices are dense, rehab permits are too ({_rho_text}). Part of
-        that is by construction - the rehab layer only covers buildings that once had a notice - so read the *shape*: with all years selected, the rehab rate
-        stops climbing beyond roughly 100 open notices per 1,000 parcels. The hardest-hit neighborhoods record about as much rehab activity as places with a
-        third of their vacancy. Hover to find them.
+        **Follow up on records, not assumptions.** {_h['relapsed']:,} parcels have an open notice issued after a rehab permit.
+        Those addresses are leads for inspection, not proof that renovation failed. Across the broader permit layer,
+        {_h['permit_records']:,} records touch {_h['permit_parcels']:,} parcels; {_h['permit_mods']:,} are modifications.
         """
     )
     _so_what = mo.md(
         """
-        **So what?** Reinvestment is being recorded in the hardest-hit neighborhoods, yet thousands of notices there have stayed open for a decade. An outreach
-        team, a community association or a reporter can use the map above to list those addresses in minutes.
+        **Next action:** choose an older notice cohort, inspect the neighborhood bars, and export its records for a community association or reporter to investigate. The notebook identifies where to ask questions; site visits and completion records are needed to establish outcomes.
         """
     )
     mo.vstack([_text, _fig, _so_what])
@@ -712,21 +819,24 @@ def _(mo, quality):
     )
     _marimo = mo.md(
         """
-        - **Reactivity replaced callbacks.** One `selection` dataframe feeds the stat tiles, map, timeline and table; changing a control re-runs exactly the cells that depend on it. There is no event-handling code in this notebook.
+        - **A custom notice-age widget.** Clickable cohort bars are keyboard-accessible buttons; a synced year threshold drives the cohort chart and downloadable record table. It bundles a distribution and a filter into one control, using [marimo anywidget support](https://docs.marimo.io/api/inputs/anywidget/).
+        - **Reactivity replaced callbacks.** One `selection` dataframe feeds the stat tiles, map, timeline and table; changing a control re-runs exactly the cells that depend on it. The custom widget handles browser clicks; marimo handles the downstream Python recomputation.
         - **The plot is an input.** Wrapping the map in `mo.ui.plotly` turns a lasso on the map into a Python value, so the record table follows the map with three lines of code.
         - **A notebook that is a Python file.** It diffs cleanly in git, an AI agent can edit it like any module, and `python notebooks/baltimore.py` runs it top to bottom - our pre-submission "no errors" check. PEP 723 metadata plus `--sandbox` makes it reproducible from one command.
         - **`mo.stop` and `mo.accordion`** let us fail with a message instead of a traceback, and keep a five-minute read short without deleting the detail.
-        - **Friction.** The one-definition-per-variable rule means every loop variable needs a `_` prefix, which is noisy in plotting code; and a notebook cannot pin its own light/dark theme, so dark charts have to carry their own background.
+        - **Friction.** Names shared across cells need one definition. Local plotting variables use `_` prefixes to avoid collisions, and the charts carry explicit backgrounds to stay readable across notebook themes.
         """
     )
     _agents = mo.md(
         """
-        This project - pipeline, web app and notebook - was built during HopHacks with **Claude Code** as a pair programmer.
+        The existing project includes an agent-assisted pipeline and web app. **Codex assisted with this notebook revision**:
+        reading the rubric, reviewing calculations, building a custom widget, and checking execution.
 
-        - **Make the agent prove it.** The most valuable prompt was not "build a map" but "refuse to continue unless the downloaded rows equal the API's count". That became a `verify` command with 30 checks, and it is why we trust the numbers above.
-        - **Agents are good at the boring, decisive search.** The agent checked all 271 of the city's GIS services for measured building heights, found none, and so we never invented any. It also noticed that *both* vacancy layers hold only open notices - which changed the story from "vacancy over time" to "what persists".
-        - **Unrun code is unverified code.** In one session the agent could edit files but not run commands; everything written then was treated as untested until it was type-checked and looked at in a browser.
-        - **Point the agent at the rubric.** When asked for AI-generated video, the agent re-read the judging criteria and argued against it: fabricated imagery next to real records, and nothing a judge could verify. Letting an agent say no was a feature.
+        - **Inspect the implementation, not just the prose.** A comparison originally claimed to omit unobserved years while drawing zeros in them. Reviewing the plotting code exposed the mismatch.
+        - **Challenge the story.** A permit before a later notice does not prove a completed rehab or a return to occupancy. We changed the claim to the sequence actually observed.
+        - **Keep computation deterministic.** Agents help write code; no language model invents records, scores neighborhoods, or generates the statistics shown here.
+        - **Make results reproducible.** The notebook reads the repository's saved extracts and includes dependency metadata. Execution and interactive checks complement prose review.
+        - **Human responsibility.** The team should review interpretation and provide its own firsthand feedback before submission; agent assistance does not establish causality or certify data quality.
         """
     )
     mo.vstack(
@@ -743,17 +853,21 @@ def _(mo, quality):
                 """
                 **Future work**
 
-                - **Snapshot the open-notice layer daily.** The city publishes no closed notices, so differencing snapshots is the only way to measure how fast vacancy is actually resolved.
+                - **Snapshot the open-notice layer daily.** These extracts omit closed notices. Repeated snapshots could track entries and exits from the open list; inspection or closure records would still be needed to explain an exit.
                 - **A custom `anywidget` 3D map** (MapLibre + deck.gl) so that clicking a neighborhood on the map drives the whole notebook.
                 - **Join 311 requests, tax-sale and receivership layers** from Open Baltimore to follow a parcel from complaint to outcome.
-                - The same pipeline already powers a companion 3D web app (`bun run dev` in this repository).
 
-                ### Feedback on marimo
+                ### Companion web experience · hosting planned
+
+                The repository also includes a **MapLibre + deck.gl** web app with a 3D hexagon view,
+                timeline playback, parcel exploration and neighborhood comparisons. It offers another way to explore
+                the same processed data. **This notebook is the complete, independently usable submission**:
+                its findings, interactive controls, source documentation and downloadable records are all here.
+                A public web link and demo video can be added once they are available.
+
                 """
             ),
-            _marimo,
-            mo.md("### Working with agentic tools"),
-            _agents,
+            mo.accordion({"Feedback on marimo: what worked and what was difficult": _marimo, "Working with agentic tools: contributions and checks": _agents}),
         ]
     )
     return
