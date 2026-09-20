@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web (typecheck, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test
+
+      # API keys are only read at request time, so the build needs no secrets.
+      - name: Build
+        run: bun run build
+
+  notebook:
+    name: Notebook (check, run, package)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: notebook
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: notebook/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Pipeline CLI loads
+        run: uv run bmore-casa --help
+
+      - name: marimo check
+        run: uv run marimo check baltimore.py
+
+      # The track disqualifies notebooks with errors: every cell must run top to bottom.
+      - name: Run every cell headlessly
+        run: uv run python baltimore.py
+
+      - name: Build submission ZIP
+        run: uv run python scripts/package_notebook.py
+
+      # What a judge or molab fork gets: only the ZIP contents, inline deps, no repo.
+      - name: Run the packaged notebook standalone
+        run: |
+          mkdir "$RUNNER_TEMP/standalone"
+          cd "$RUNNER_TEMP/standalone"
+          unzip -q "$GITHUB_WORKSPACE/notebook/dist/bmore-casa-submission.zip"
+          uv run --no-project --script baltimore.py
+
+      - name: Tracked data archive matches the data it was built from
+        run: |
+          for name in $(unzip -Z1 baltimore-data.zip); do
+            source="$name"
+            case "$name" in public/*) source="../web/$name" ;; esac
+            unzip -p baltimore-data.zip "$name" | cmp - "$source"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bmore-casa-submission
+          path: notebook/dist/bmore-casa-submission.zip
+          if-no-files-found: error

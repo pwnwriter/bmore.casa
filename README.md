@@ -233,6 +233,20 @@ notebook/                  marimo notebook + data pipeline (uv project)
   scripts/                 package_notebook.py (builds the submission ZIP)
   data/raw/                raw ArcGIS batches (git-ignored, reproducible)
   data/processed/          Parquet, quality_report.json, findings.json (+ DuckDB, git-ignored)
+.github/workflows/         ci.yml (every push / PR), release.yml (tags)
+```
+
+## CI and releases
+
+Every push and pull request runs two jobs (`.github/workflows/ci.yml`), neither of which needs secrets:
+
+- **Web** — `bun install --frozen-lockfile`, typecheck, `bun test`, `next build`.
+- **Notebook** — `uv sync --locked`, `marimo check`, a headless run of every cell, a build of the submission ZIP, a standalone run of that ZIP outside the repo (what a judge or molab fork gets), and a check that the tracked `baltimore-data.zip` still matches the data it was built from. The ZIP is kept as a workflow artifact.
+
+Pushing a tag publishes a GitHub release with `bmore-casa-submission.zip`, `baltimore-data.zip` and checksums, after re-running the notebook checks:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
 ```
 
 ## 90-second demo

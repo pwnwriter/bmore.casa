@@ -1,0 +1,54 @@
+name: Release
+
+# Push a tag to publish the notebook submission:  git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish submission ZIP
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: notebook
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: notebook/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Notebook runs without errors
+        run: |
+          uv run marimo check baltimore.py
+          uv run python baltimore.py
+
+      - name: Build submission ZIP
+        run: uv run python scripts/package_notebook.py
+
+      - name: Packaged notebook runs standalone
+        run: |
+          mkdir "$RUNNER_TEMP/standalone"
+          cd "$RUNNER_TEMP/standalone"
+          unzip -q "$GITHUB_WORKSPACE/notebook/dist/bmore-casa-submission.zip"
+          uv run --no-project --script baltimore.py
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum bmore-casa-submission.zip baltimore-data.zip > SHA256SUMS.txt
+          gh release create "$GITHUB_REF_NAME" \
+            bmore-casa-submission.zip baltimore-data.zip SHA256SUMS.txt \
+            --title "bmore.casa $GITHUB_REF_NAME" \
+            --generate-notes \
+            --notes "Download **bmore-casa-submission.zip**, extract it, then run \`uvx marimo run --sandbox baltimore.py\`. For molab, import \`baltimore.py\` and upload \`baltimore-data.zip\` through the Files sidebar. No API keys are needed."
