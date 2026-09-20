@@ -1,0 +1,43 @@
+# build output
+dist/
+.output/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+.direnv
+
+# next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# data: raw downloads and the DuckDB file are reproducible via
+# `uv run baltimore-reborn refresh`; Parquet and public/data assets are kept
+# so the app and notebook run straight after a clone.
+data/raw/
+data/processed/*.duckdb
+
+# secrets
+.env*.local
+
+# copied from node_modules on postinstall
+public/maplibre/

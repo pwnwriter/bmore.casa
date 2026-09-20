@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-navy-950: #060a14;
+  --color-navy-900: #0a1020;
+  --color-navy-800: #111a2e;
+  --color-cyan-glow: #4dd6e8;
+  --color-vacant: #ff7061;
+  --color-rehab: #3ddc97;
+  --color-demolition: #a684e0;
+  --color-permit: #f5b041;
+}
+
+html,
+body {
+  height: 100%;
+  background: #060a14;
+  color: #e6edf5;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(13, 20, 37, 0.94), rgba(8, 13, 26, 0.96));
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(125, 211, 232, 0.13);
+  box-shadow: 0 18px 50px -18px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 232, 0.78);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(125, 211, 232, 0.25) transparent;
+}
+
+/* ---- dual-thumb year range: two stacked inputs, only the thumbs take pointer events */
+.range-dual {
+  position: relative;
+  height: 18px;
+}
+.range-dual input[type="range"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  background: none;
+  pointer-events: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.range-dual input[type="range"]::-webkit-slider-runnable-track {
+  height: 18px;
+  background: none;
+}
+.range-dual input[type="range"]::-moz-range-track {
+  height: 18px;
+  background: none;
+}
+.range-dual input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: auto;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border-radius: 999px;
+  background: #e9fbff;
+  border: 2px solid #4dd6e8;
+  box-shadow: 0 0 12px rgba(77, 214, 232, 0.65);
+  cursor: ew-resize;
+}
+.range-dual input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: #e9fbff;
+  border: 2px solid #4dd6e8;
+  box-shadow: 0 0 12px rgba(77, 214, 232, 0.65);
+  cursor: ew-resize;
+}
+.range-dual input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ---- intro */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.panel-in {
+  animation: panel-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .panel-in {
+    animation: none;
+  }
+}
+
+/* ---- MapLibre chrome, restyled for the dark theme */
+.maplibregl-ctrl-group {
+  background: rgba(10, 16, 32, 0.82) !important;
+  border: 1px solid rgba(125, 211, 232, 0.14);
+  backdrop-filter: blur(12px);
+  box-shadow: none !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid rgba(125, 211, 232, 0.12) !important;
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(0.92) hue-rotate(160deg);
+}
+.maplibregl-ctrl-attrib {
+  background: rgba(6, 10, 20, 0.7) !important;
+  color: #8fa3b8;
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a {
+  color: #a9bdd1 !important;
+}
+.maplibregl-ctrl-attrib-button {
+  filter: invert(0.85);
+}
+.maplibregl-ctrl-bottom-right {
+  z-index: 5;
+}

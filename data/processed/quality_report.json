@@ -1,0 +1,121 @@
+{
+  "vacant_open": {
+    "raw_records": 11550,
+    "exact_duplicates_removed": 0,
+    "missing_coordinates": 0,
+    "outside_city_bbox": 0,
+    "missing_or_implausible_primary_date": 0,
+    "reused_object_ids": 0,
+    "source_label_missing_or_unknown": 0,
+    "label_vs_spatial_join_agreement": 1.0,
+    "neighborhood_filled_by_spatial_join": 0,
+    "neighborhood_unassigned": 0,
+    "distinct_parcels_blocklot": 11550,
+    "records_after_cleaning": 11550,
+    "date_range": [
+      "2004-11-05",
+      "2026-08-25"
+    ]
+  },
+  "vacant_all": {
+    "raw_records": 11481,
+    "exact_duplicates_removed": 0,
+    "missing_coordinates": 0,
+    "outside_city_bbox": 0,
+    "missing_or_implausible_primary_date": 0,
+    "reused_object_ids": 0,
+    "source_label_missing_or_unknown": 0,
+    "label_vs_spatial_join_agreement": 1.0,
+    "neighborhood_filled_by_spatial_join": 0,
+    "neighborhood_unassigned": 0,
+    "distinct_parcels_blocklot": 11481,
+    "records_after_cleaning": 11481,
+    "date_range": [
+      "2004-11-05",
+      "2026-09-18"
+    ]
+  },
+  "rehabs": {
+    "raw_records": 12863,
+    "exact_duplicates_removed": 0,
+    "missing_coordinates": 0,
+    "outside_city_bbox": 0,
+    "missing_or_implausible_primary_date": 0,
+    "reused_object_ids": 0,
+    "source_label_missing_or_unknown": 0,
+    "label_vs_spatial_join_agreement": 1.0,
+    "neighborhood_filled_by_spatial_join": 0,
+    "neighborhood_unassigned": 0,
+    "distinct_parcels_blocklot": 12863,
+    "records_after_cleaning": 12863,
+    "date_range": [
+      "2015-01-05",
+      "2026-08-25"
+    ]
+  },
+  "demolitions": {
+    "raw_records": 4276,
+    "exact_duplicates_removed": 2,
+    "missing_coordinates": 0,
+    "outside_city_bbox": 0,
+    "missing_or_implausible_primary_date": 0,
+    "reused_object_ids": 9,
+    "source_label_missing_or_unknown": 0,
+    "label_vs_spatial_join_agreement": 1.0,
+    "neighborhood_filled_by_spatial_join": 0,
+    "neighborhood_unassigned": 0,
+    "distinct_parcels_blocklot": 4265,
+    "records_after_cleaning": 4274,
+    "date_range": [
+      "2011-10-27",
+      "2026-08-11"
+    ]
+  },
+  "permits": {
+    "raw_records": 292806,
+    "exact_duplicates_removed": 0,
+    "missing_coordinates": 0,
+    "outside_city_bbox": 0,
+    "missing_or_implausible_primary_date": 0,
+    "reused_object_ids": 0,
+    "source_label_missing_or_unknown": 1141,
+    "label_vs_spatial_join_agreement": 1.0,
+    "neighborhood_filled_by_spatial_join": 1141,
+    "neighborhood_unassigned": 0,
+    "distinct_parcels_blocklot": 90556,
+    "records_after_cleaning": 292806,
+    "date_range": [
+      "2019-01-01",
+      "2026-09-18"
+    ],
+    "permit_modifications": 42938,
+    "cost_null": 75183,
+    "cost_nonpositive": 2565,
+    "cost_over_100m": 13,
+    "category_counts": {
+      "construction": 261474,
+      "use": 26216,
+      "demolition": 2830,
+      "zoning": 1607,
+      "temporary": 679
+    },
+    "prefix_counts": {
+      "COM": 220419,
+      "BRCM": 35779,
+      "USE": 21148,
+      "BCCM": 5276,
+      "BUSE": 5068,
+      "DEM": 2638,
+      "BMZ": 1607,
+      "TMP": 576,
+      "BDEM": 192,
+      "BTEMP": 103
+    }
+  },
+  "parcels": {
+    "total_parcels": 238160,
+    "parcels_without_matching_neighborhood": 408,
+    "neighborhoods_with_parcel_count": 279
+  },
+  "generated_at": "2026-09-19T22:14:18+00:00"
+}

@@ -1,0 +1,26 @@
+[project]
+name = "baltimore-reborn"
+version = "0.1.0"
+description = "Interactive 3D data visualization of Baltimore City's housing landscape, built on DHCD open data."
+readme = "README.md"
+authors = [
+    { name = "pwnwriter", email = "hi@pwnwriter.me" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.1",
+    "httpx>=0.27",
+    "marimo>=0.9",
+    "numpy>=2.0",
+    "plotly>=5.24",
+    "polars>=1.9",
+    "pyarrow>=17",
+    "shapely>=2.0",
+]
+
+[project.scripts]
+baltimore-reborn = "baltimore_reborn.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.16,<0.13.0"]
+build-backend = "uv_build"

@@ -1,0 +1,130 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.24.2",
+    "script_metadata_hash": "5120bfea7ee380620130dd4df170547a"
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "7dee8e9811f64fbbeb10c5227b6c371b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "b8c7b61a99c6917e53d18d0a7f3c25e2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "a423d7497bdf7e84948cf29a9e1534d9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "cab150a60e555c70ff3e8f5ee46546cd",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "131e7875677bd60857d9d3266c3bfbdf",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "fc01a3e13d0c2ede997d542732ffa0bb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"problem-statement\">Problem statement</h2>\n<span class=\"paragraph\">Baltimore has fought vacancy with a succession of programs - <em>Vacants to Value</em> (2010), the state-funded\n<em>Project C.O.R.E.</em> demolitions (2016) and the $3 billion vacant-housing plan announced in 2023 - and\n<a href=\"https://bniajfi.org/\" rel=\"noopener noreferrer\" target=\"_blank\">BNIA-JFI's Vital Signs</a> tracks neighborhood indicators year by year. But the city's raw\nrecords sit in separate layers: notices in one, rehab permits in another, demolitions and building permits in two more.\nA resident cannot easily ask the obvious question of their own block:</span>\n<blockquote>\n<span class=\"paragraph\"><strong>Where has vacancy lasted a decade or more, where is reinvestment being recorded, and do those two maps overlap?</strong></span>\n</blockquote>\n<span class=\"paragraph\">This notebook links the layers on the city's parcel ID and lets anyone answer that for any neighborhood and\nany period - while being explicit about what public records <em>cannot</em> show.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "74bc7ea1be0bec9131e730d28b458fa9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "0a027ae14a7eb6bd0ead7274b9169c79",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "6ea8cdf597416672d759fb077e7ce1c1",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "7ff977ed881392856bd4a50769eab9d2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "c8988d9a01260f76f4e6b4ae28c2d73e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "f0c1dd609184ca4a0eea291c1ade564a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "b614ac51a56f01fec6193a124af66d58",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "0c6dfece065628737e2738c6d9778824",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "627ffba60d43b60e385956967ab3d4e0",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "1638acd99e4da56d3cd848d3c4568834",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "00fb6fcec1d032a71571df999adda623",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "b6f3eced47eadc94009f8c8b94acefaa",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "2da1e9f4476e4f9af1518622878bd666",
+      "outputs": [],
+      "console": []
+    }
+  ]
+}
