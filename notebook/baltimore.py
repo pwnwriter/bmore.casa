@@ -14,8 +14,8 @@
 
 Run from a fresh clone (the cleaned Parquet files ship with the repo):
 
-    uvx marimo run --sandbox notebooks/baltimore.py     # read it as an app
-    uvx marimo edit --sandbox notebooks/baltimore.py    # read it with the code
+    uvx marimo run --sandbox notebook/baltimore.py     # read it as an app
+    uvx marimo edit --sandbox notebook/baltimore.py    # read it with the code
 
 For a standalone copy or molab fork, upload baltimore-data.zip beside this file.
 The notebook unpacks the bundled snapshot automatically. No API keys are needed;
@@ -62,12 +62,14 @@ def _(json, mo, pl):
         "public/data/summary.json",
         "public/data/neighborhoods.geojson",
     ]
-    ROOT = next(
-        (_root for _root in (_notebook_dir, _notebook_dir.parent)
-         if all((_root / _name).is_file() for _name in _required)),
-        _notebook_dir,
-    )
-    _missing = [_name for _name in _required if not (ROOT / _name).is_file()]
+    # In the repo, data/processed sits beside this file and public/data lives in ../web;
+    # a standalone copy unpacks both from the archive into this folder.
+    _roots = (_notebook_dir, _notebook_dir.parent / "web")
+
+    def _locate(_name):
+        return next((_root / _name for _root in _roots if (_root / _name).is_file()), _notebook_dir / _name)
+
+    _missing = [_name for _name in _required if not _locate(_name).is_file()]
     _archive = _notebook_dir / "baltimore-data.zip"
     _archive_error = ""
     if _missing and _archive.is_file():
@@ -76,12 +78,12 @@ def _(json, mo, pl):
                 # Read the complete snapshot first; extract only the seven known data paths.
                 _contents = {_name: _bundle.read(_name) for _name in _required}
             for _name, _content in _contents.items():
-                _destination = ROOT / _name
+                _destination = _notebook_dir / _name
                 _destination.parent.mkdir(parents=True, exist_ok=True)
                 _destination.write_bytes(_content)
         except (_BadZipFile, KeyError, OSError) as _error:
             _archive_error = f"\n\nThe data archive could not be unpacked: `{_error}`. Re-upload the original archive and rerun."
-        _missing = [_name for _name in _required if not (ROOT / _name).is_file()]
+        _missing = [_name for _name in _required if not _locate(_name).is_file()]
     mo.stop(
         bool(_missing) or bool(_archive_error),
         mo.callout(mo.md(
@@ -93,8 +95,8 @@ def _(json, mo, pl):
         ), kind="danger"),
     )
 
-    PROCESSED = ROOT / "data" / "processed"
-    PUBLIC = ROOT / "public" / "data"
+    PROCESSED = _locate("data/processed/events.parquet").parent
+    PUBLIC = _locate("public/data/summary.json").parent
     events = pl.read_parquet(PROCESSED / "events.parquet")
     hoods = pl.read_parquet(PROCESSED / "neighborhoods.parquet")
     vacant = pl.read_parquet(PROCESSED / "vacant_open.parquet")
@@ -846,7 +848,7 @@ def _(mo, quality):
         - **A custom notice-age widget.** Clickable cohort bars are keyboard-accessible buttons; a synced year threshold drives the cohort chart and downloadable record table. It bundles a distribution and a filter into one control, using [marimo anywidget support](https://docs.marimo.io/api/inputs/anywidget/).
         - **Reactivity replaced callbacks.** One `selection` dataframe feeds the stat tiles, map, timeline and table; changing a control re-runs exactly the cells that depend on it. The custom widget handles browser clicks; marimo handles the downstream Python recomputation.
         - **The plot is an input.** Wrapping the map in `mo.ui.plotly` turns a lasso on the map into a Python value, so the record table follows the map with three lines of code.
-        - **A notebook that is a Python file.** It diffs cleanly in git, an AI agent can edit it like any module, and `python notebooks/baltimore.py` runs it top to bottom - our pre-submission "no errors" check. PEP 723 metadata plus `--sandbox` makes it reproducible from one command.
+        - **A notebook that is a Python file.** It diffs cleanly in git, an AI agent can edit it like any module, and `python baltimore.py` runs it top to bottom - our pre-submission "no errors" check. PEP 723 metadata plus `--sandbox` makes it reproducible from one command.
         - **`mo.stop` and `mo.accordion`** let us fail with a message instead of a traceback, and keep a five-minute read short without deleting the detail.
         - **Friction.** Names shared across cells need one definition. Local plotting variables use `_` prefixes to avoid collisions, and the charts carry explicit backgrounds to stay readable across notebook themes.
         """

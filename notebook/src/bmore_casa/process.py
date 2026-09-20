@@ -4,7 +4,7 @@ Outputs
   data/processed/*.parquet        normalized analytical tables
   data/processed/baltimore.duckdb same tables + aggregate views
   data/processed/quality_report.json
-  public/data/*                   lightweight frontend assets
+  ../web/public/data/*         lightweight frontend assets
 """
 
 import gzip

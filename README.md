@@ -24,22 +24,26 @@ surroundings. A separate photo-based renovation film is explicitly labeled as an
 
 ## Quick start
 
-Processed data ships in the repo (`public/data`, `data/processed/*.parquet`), so the app and notebook run straight after a clone.
+The repo has two halves: `web/` (the Next.js app) and `notebook/` (the marimo notebook, the Python pipeline and its Parquet data). Processed data ships in the repo (`web/public/data`, `notebook/data/processed/*.parquet`), so both run straight after a clone.
 
 ```bash
 # 1. web app
+cd web
 bun install                 # also copies the MapLibre worker and Draco decoders (postinstall)
 bun run dev                 # http://localhost:3000
 
 # 2. marimo notebook
+cd ../notebook
 uv sync
-uv run marimo run notebooks/baltimore.py     # interactive app  -> http://localhost:2718
-uv run marimo edit notebooks/baltimore.py    # development / editing mode
+uv run marimo run baltimore.py     # interactive app  -> http://localhost:2718
+uv run marimo edit baltimore.py    # development / editing mode
 ```
 
 `npm install` / `npm run dev` work too. With Nix + direnv, `direnv allow` provides bun, node and uv.
 
 ### All commands
+
+`uv` commands run from `notebook/`, `bun` commands from `web/`.
 
 | Command | What it does |
 |---|---|
@@ -49,14 +53,14 @@ uv run marimo edit notebooks/baltimore.py    # development / editing mode
 | `uv run bmore-casa verify` | 30 independent checks: counts, dates, coordinates, aggregates |
 | `bun run dev` / `bun run build && bun run start` | Development / production web app |
 | `bun run typecheck` | `tsc --noEmit` |
-| `uv run marimo run notebooks/baltimore.py` | Notebook as an interactive application |
-| `uv run python notebooks/baltimore.py` | Execute every notebook cell headlessly (CI check) |
+| `uv run marimo run baltimore.py` | Notebook as an interactive application |
+| `uv run python baltimore.py` | Execute every notebook cell headlessly (CI check) |
 
 A full refresh downloads ~322k records and takes about two minutes.
 
 ### Optional AI features
 
-Create `.env` (git-ignored) — both keys stay on the server and are never sent to the browser:
+Create `web/.env` (git-ignored) — both keys stay on the server and are never sent to the browser:
 
 ```bash
 GEMINI_API_KEY=...        # enables "Ask Baltimore", tour scripts and Veo renovation films
@@ -98,7 +102,7 @@ match. Neither aerial imagery nor records establish current condition, interiors
 capacity, or renovation feasibility. The older schematic OSM endpoint remains available at
 `/api/property` but is not used by the property film.
 
-Run `bun test lib/property` for reference, geometry, tile-proxy, camera-path and video API tests.
+Run `bun test lib/property` (from `web/`) for reference, geometry, tile-proxy, camera-path and video API tests.
 Before a public deployment, add authentication, usage limits and an upload-size limit at the reverse
 proxy: the AI endpoints consume the server account's quota and are intended for a local/demo app.
 
@@ -106,7 +110,7 @@ proxy: the AI endpoints consume the server account's quota and are intended for 
 
 The *Photorealistic 3D city* toggle draws the records on top of **Google Photorealistic 3D Tiles** — Google's textured
 photogrammetry of the real buildings (the same source used by projects such as *gods-eye-view*). It is real measured
-geometry, labelled in-app as context imagery rather than DHCD data. Add **one** of these to `.env` and restart:
+geometry, labelled in-app as context imagery rather than DHCD data. Add **one** of these to `web/.env` and restart:
 
 ```bash
 CESIUM_ION_TOKEN=...       # free for non-commercial use: cesium.com/ion -> Asset Depot -> add
@@ -124,7 +128,7 @@ as it was — handy for opening a demo on the real city before revealing the dat
 
 ### Works offline
 
-Once the data is downloaded the app makes **no ArcGIS calls at runtime** — it reads static files from `public/data`.
+Once the data is downloaded the app makes **no ArcGIS calls at runtime** — it reads static files from `web/public/data`.
 The street basemap (OpenFreeMap) is a progressive enhancement: if it cannot be reached within 3.5 s, the map falls back
 to a fully local style where the official neighborhood polygons are the geography. Force that look any time with
 `http://localhost:3000/?basemap=off` (a useful safety net on venue Wi-Fi). The notebook's map is offline by default.
@@ -151,15 +155,15 @@ Boundaries and parcels: Baltimore City Enterprise GIS. Basemap: [OpenFreeMap](ht
 
 ## How the pipeline works
 
-`src/bmore_casa/` — `download.py` → `process.py` → `verify.py`.
+`notebook/src/bmore_casa/` — `download.py` → `process.py` → `verify.py`.
 
-1. **Metadata first.** Each layer's metadata is fetched and saved (`data/raw/<layer>/metadata.json`): fields, OID field, `maxRecordCount`, spatial reference.
+1. **Metadata first.** Each layer's metadata is fetched and saved (`notebook/data/raw/<layer>/metadata.json`): fields, OID field, `maxRecordCount`, spatial reference.
 2. **Count, then IDs.** `returnCountOnly` gives the API count; `returnIdsOnly` (not subject to `maxRecordCount`) gives every OBJECTID.
 3. **Object-ID batching.** Features are pulled in OID ranges of ≤1,000, requested as WGS84 (`outSR=4326`; the services are natively Maryland State Plane, WKID 2248).
 4. **Failure detection.** ArcGIS returns errors as HTTP 200 + `{"error":…}` — treated as failures and retried with backoff. A batch that reports `exceededTransferLimit` or returns a different number of features than expected is split in half and re-fetched. The run aborts unless downloaded == API count.
-5. **Raw preserved.** Every batch is kept gzip-compressed in `data/raw/`, with a `manifest.json` of counts and timestamps.
+5. **Raw preserved.** Every batch is kept gzip-compressed in `notebook/data/raw/`, with a `manifest.json` of counts and timestamps.
 6. **Normalize.** Dates → Baltimore calendar dates; addresses upper-cased and whitespace-collapsed; `BLOCKLOT` cleaned; exact duplicate rows dropped; coordinates validated against the city bounding box; neighborhood labels validated against the 279 official names, with point-in-polygon filling blanks.
-7. **Store.** Parquet tables + `baltimore.duckdb` (tables and a `neighborhood_summary` view) in `data/processed/`, plus `quality_report.json` and `findings.json`.
+7. **Store.** Parquet tables + `baltimore.duckdb` (tables and a `neighborhood_summary` view) in `notebook/data/processed/`, plus `quality_report.json` and `findings.json`.
 8. **Ship light.** The browser gets ~4 MB: three point files (29k records), a hex-binned count grid for the 3D columns, neighborhood polygons, and year × type aggregates. The 293k permits are **never sent in bulk** — citywide they appear as aggregated columns, and individual permits load per neighborhood on demand.
 
 ### Things the data taught us (and how they are handled)
@@ -184,7 +188,7 @@ Boundaries and parcels: Baltimore City Enterprise GIS. Basemap: [OpenFreeMap](ht
 
 ## Verified patterns
 
-Generated by `process.py` into `data/processed/findings.json`; re-computed live in the notebook.
+Generated by `process.py` into `notebook/data/processed/findings.json`; re-computed live in the notebook.
 
 1. **Many open notices are old.** Of 11,550 open notices, 3,383 (29%) were issued before 2016 — the oldest on 2004-11-05 — while 5,775 (50%) date from 2022 or later.
 2. **Vacancy is concentrated.** 10 of 279 neighborhoods hold 38% of open notices; 65 have none. Carrollton Ridge has 745 — 329 per 1,000 parcels, the highest rate among neighborhoods with ≥100 parcels.
@@ -211,20 +215,24 @@ and disposes its renderer when closed; it does not use React Three Fiber.
 ## Project structure
 
 ```
-app/                     Next.js App Router (page, layout, /api/ask, /api/speak, /api/tiles3d)
-components/map/          CityMap - MapLibre + deck.gl overlay
-components/dashboard/    Explorer, panels, timeline, search, record card, Ask Baltimore
-components/charts/       YearBars (SVG)
-components/property/     Photorealistic tour, narration, recording and renovation video
-lib/data/                asset loading, statistics, fact sheet, types
-lib/property/            Record lookup, tile rewriting, camera path, recording and video tokens
-lib/geo/                 colors, layer definitions, map style + offline fallback
-src/bmore_casa/    Python pipeline: sources, download, process, verify, cli
-notebooks/baltimore.py   marimo notebook / app
-scripts/                 copy-maplibre-worker.mjs (postinstall)
-data/raw/                raw ArcGIS batches (git-ignored, reproducible)
-data/processed/          Parquet, quality_report.json, findings.json (+ DuckDB, git-ignored)
-public/data/             frontend assets
+web/                       Next.js app (bun project)
+  app/                     App Router (page, layout, /api/ask, /api/speak, /api/tiles3d)
+  components/map/          CityMap - MapLibre + deck.gl overlay
+  components/dashboard/    Explorer, panels, timeline, search, record card, Ask Baltimore
+  components/charts/       YearBars (SVG)
+  components/property/     Photorealistic tour, narration, recording and renovation video
+  lib/data/                asset loading, statistics, fact sheet, types
+  lib/property/            Record lookup, tile rewriting, camera path, recording and video tokens
+  lib/geo/                 colors, layer definitions, map style + offline fallback
+  scripts/                 copy-maplibre-worker.mjs (postinstall)
+  public/data/             frontend assets (written by the pipeline)
+notebook/                  marimo notebook + data pipeline (uv project)
+  baltimore.py             marimo notebook / app
+  baltimore-data.zip       data snapshot for standalone / molab copies
+  src/bmore_casa/          Python pipeline: sources, download, process, verify, cli
+  scripts/                 package_notebook.py (builds the submission ZIP)
+  data/raw/                raw ArcGIS batches (git-ignored, reproducible)
+  data/processed/          Parquet, quality_report.json, findings.json (+ DuckDB, git-ignored)
 ```
 
 ## 90-second demo

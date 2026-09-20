@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = ROOT / "data" / "raw"
 PROCESSED_DIR = ROOT / "data" / "processed"
-PUBLIC_DIR = ROOT / "public" / "data"
+PUBLIC_DIR = ROOT.parent / "web" / "public" / "data"
 
 DHCD = "https://baltegis.baltimorecity.gov/mapping/rest/services/Housing/DHCD_Open_Baltimore_Datasets/FeatureServer"
 GEODATA = "https://geodata.baltimorecity.gov/egis/rest/services"

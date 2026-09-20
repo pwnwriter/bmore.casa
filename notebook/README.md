@@ -1,19 +1,19 @@
 # bmore.casa notebook
 
-The DSAI x marimo submission is `baltimore.py`. Keep it inside this repository: it reads the bundled `data/processed` and `public/data` files relative to the notebook. No API key is required. Package installation needs internet; the default visualizations use local data without a street-tile service.
+The DSAI x marimo submission is `baltimore.py`. Keep it inside this repository: it reads the bundled `data/processed` files beside it and `public/data` from the sibling `web/` folder. No API key is required. Package installation needs internet; the default visualizations use local data without a street-tile service.
 
 ## Run
 
-From the repository root:
+From this folder (`notebook/`):
 
 ```bash
 uv sync --locked
-uv run marimo run notebooks/baltimore.py
+uv run marimo run baltimore.py
 # To inspect or edit the code:
-uv run marimo edit notebooks/baltimore.py
+uv run marimo edit baltimore.py
 ```
 
-Alternatively, `uvx marimo run --sandbox notebooks/baltimore.py` uses the notebook's inline dependencies. The repository lockfile is the exact reproducible environment.
+Alternatively, `uvx marimo run --sandbox baltimore.py` uses the notebook's inline dependencies. The repository lockfile is the exact reproducible environment.
 
 ## Standalone copies and molab forks
 
@@ -49,8 +49,8 @@ archive. A successful run in the author's existing session is not a fresh-accoun
 ## Validation
 
 ```bash
-uv run marimo check notebooks/baltimore.py
-uv run python notebooks/baltimore.py
+uv run marimo check baltimore.py
+uv run python baltimore.py
 ```
 
 Both checks passed during this revision. Browser validation confirmed the custom cutoff updates the rendered count and neighborhood plot. The default presentation rendered with the local geographic data.

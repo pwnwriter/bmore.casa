@@ -1,7 +1,8 @@
 """Package the notebook and its saved public-data snapshot for molab or local use."""
 
+import time
 from pathlib import Path
-from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
+from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile, ZipInfo
 
 
 def main() -> None:
@@ -15,20 +16,24 @@ def main() -> None:
         "public/data/summary.json",
         "public/data/neighborhoods.geojson",
     ]
-    for name in files:
-        if not (root / name).is_file():
-            raise FileNotFoundError(root / name)
+    # public/data belongs to the web app; the archive keeps the flat layout the notebook unpacks.
+    sources = {name: (root.parent / "web" if name.startswith("public/") else root) / name for name in files}
+    for source in sources.values():
+        if not source.is_file():
+            raise FileNotFoundError(source)
     output = root / "dist"
     output.mkdir(exist_ok=True)
     data_archive = output / "baltimore-data.zip"
     with ZipFile(data_archive, "w", compression=ZIP_DEFLATED) as archive:
-        for name in files:
-            archive.write(root / name, name)
+        for name, source in sources.items():
+            archive.write(source, name)
     submission = output / "bmore-casa-submission.zip"
     with ZipFile(submission, "w", compression=ZIP_STORED) as archive:
         archive.write(data_archive, data_archive.name)
-        archive.write(root / "notebooks/baltimore.py", "baltimore.py")
-        archive.writestr("README.txt", """bmore.casa — portable notebook
+        archive.write(root / "baltimore.py", "baltimore.py")
+        # Explicit timestamp: the Nix shell sets SOURCE_DATE_EPOCH to 1980-01-01 UTC, which
+        # is 1979 in local time and cannot be encoded in a ZIP header.
+        archive.writestr(ZipInfo("README.txt", date_time=time.localtime()[:6]), """bmore.casa — portable notebook
 
 Extract this submission ZIP first. Keep baltimore.py and baltimore-data.zip together.
 

@@ -33,12 +33,12 @@ __pycache__/
 # data: raw downloads and the DuckDB file are reproducible via
 # `uv run bmore-casa refresh`; Parquet and public/data assets are kept
 # so the app and notebook run straight after a clone.
-data/raw/
-data/processed/*.duckdb
+notebook/data/raw/
+notebook/data/processed/*.duckdb
 
 # secrets
 .env*.local
 
 # copied from node_modules on postinstall
-public/maplibre/
-public/draco/
+web/public/maplibre/
+web/public/draco/
