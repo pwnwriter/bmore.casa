@@ -32,8 +32,7 @@ city demolitions and building permits — built for HopHacks 2026 on real Baltim
 [Data sources](#data-sources) ·
 [Pipeline](#how-the-pipeline-works) ·
 [Findings](#verified-patterns) ·
-[Notebook](notebook/README.md) ·
-[Demo script](#90-second-demo)
+[Notebook](notebook/README.md)
 
 </div>
 
@@ -64,7 +63,6 @@ city demolitions and building permits — built for HopHacks 2026 on real Baltim
 - [Verified patterns](#verified-patterns)
 - [Project structure](#project-structure)
 - [CI and releases](#ci-and-releases)
-- [90-second demo](#90-second-demo)
 - [Attribution](#attribution)
 
 </details>
@@ -354,7 +352,7 @@ Every push and pull request runs two jobs ([`ci.yml`](.github/workflows/ci.yml))
 | Job | Steps |
 |---|---|
 | **Web** | `bun install --frozen-lockfile` → typecheck → `bun test` → `next build` |
-| **Notebook** | `uv sync --locked` → `marimo check` → headless run of every cell → build the submission ZIP → run that ZIP standalone outside the repo (what a judge or molab fork gets) → check the tracked `baltimore-data.zip` still matches the data it was built from. The ZIP is kept as a workflow artifact. |
+| **Notebook** | `uv sync --locked` → `marimo check` → headless run of every cell → build the submission ZIP → run that ZIP standalone outside the repo (what someone without the repo gets) → check the tracked `baltimore-data.zip` still matches the data it was built from. The ZIP is kept as a workflow artifact. |
 
 Pushing a tag publishes a [GitHub release](https://github.com/pwnwriter/baltimore-reborn/releases) with
 `bmore-casa-submission.zip`, `baltimore-data.zip` and checksums, after re-running the notebook checks
@@ -363,26 +361,6 @@ Pushing a tag publishes a [GitHub release](https://github.com/pwnwriter/baltimor
 ```bash
 git tag v0.1.0 && git push origin v0.1.0
 ```
-
-## 90-second demo
-
-<details>
-<summary><b>Show the script</b></summary>
-
-<br>
-
-1. **Open (0:00)** — Title over the orbiting city. *"Every column you're about to see is a count of real city records."* Click **Explore Baltimore**.
-2. **The shape of vacancy (0:10)** — Coral columns rise in two wings, east and west of downtown. *"11,550 open vacant building notices; ten neighborhoods hold 38% of them."*
-3. **Select a neighborhood (0:20)** — Click **Carrollton Ridge** in the ranked list. The view drops to rowhouse blocks. *"329 open notices per 1,000 parcels — the highest rate in the city. 36% of them were issued before 2016."* Click a coral dot: the record card shows the notice, its parcel ID, and a linked rehab permit issued *before* the notice. *"A permit is not an ending."*
-   *If a Cesium/Google key is configured:* flip **Photorealistic 3D city** and tilt in — the same records now sit on Google's photogrammetry of the actual rowhouses. *"These aren't rendered buildings. This is the block."*
-4. **Time machine (0:40)** — Return to full city, press **Play**. *"Watch the purple: city demolitions peak at 780 in 2019, then fall to 163 by 2025 — while green rehab permits climb to 1,253 in 2024."* Open **What is counted?**: *"And we say what this can't show: the city publishes only open notices, so this is not a replay of past vacancy."*
-5. **Compare (0:55)** — Search **Broadway East** → **Compare** → **McElderry Park**. *"Next-door neighbors: 138 demolitions per 1,000 parcels versus 10 — and nearly twice the rehab rate the other way."*
-6. **Notebook (1:10)** — Switch to the marimo app. Pick a neighborhood and drag the year slider: map, charts, ranking and the written narrative recompute. *"Same cleaned data, fully reactive, with provenance and data-quality checks — useful even without the web app."*
-7. **Close (1:25)** — *"Where does vacancy persist for a decade, where is reinvestment being recorded, and do those maps overlap? bmore.casa lets any resident ask that about their own block — and shows exactly how far the public record can answer."*
-
-*(Optional flourish: Ask Baltimore → "How did recorded rehabilitation activity change in Oliver?" → press the speaker icon.)*
-
-</details>
 
 ## Attribution
 

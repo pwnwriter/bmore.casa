@@ -38,9 +38,8 @@ def main() -> None:
 Extract this submission ZIP first. Keep baltimore.py and baltimore-data.zip together.
 
 molab: import baltimore.py, then upload baltimore-data.zip through the Files sidebar
-beside notebook.py. Run all cells. The notebook unpacks its seven data files automatically.
+beside baltimore.py. Run all cells. The notebook unpacks its seven data files automatically.
 Upload the ZIP through Files so molab retains the original archive between sessions.
-Before judging, test a fork from a different account and confirm the ZIP is included.
 
 Local: install uv, then run:
   uvx marimo run --sandbox baltimore.py

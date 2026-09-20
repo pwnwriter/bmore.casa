@@ -62,14 +62,14 @@ jobs:
       - name: marimo check
         run: uv run marimo check baltimore.py
 
-      # The track disqualifies notebooks with errors: every cell must run top to bottom.
+      # Every cell must run top to bottom without errors.
       - name: Run every cell headlessly
         run: uv run python baltimore.py
 
       - name: Build submission ZIP
         run: uv run python scripts/package_notebook.py
 
-      # What a judge or molab fork gets: only the ZIP contents, inline deps, no repo.
+      # What someone without the repo gets: only the ZIP contents and inline deps.
       - name: Run the packaged notebook standalone
         run: |
           mkdir "$RUNNER_TEMP/standalone"
