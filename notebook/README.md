@@ -44,7 +44,7 @@ See [molab storage policy](https://marimo.io/pages/molab/storage).
 ## What's inside
 
 - Executive summary, problem statement, data overview, core visualization, insight synthesis, discussion and future work.
-- A custom anywidget cohort explorer, reactive map filters, neighborhood comparison, and searchable, downloadable records.
+- A custom anywidget cohort explorer, a clickable neighborhood ridgeline (adapted from WigglyStuff) that drives the map and comparison, an optional five-stop guided tour, a Play/Replay data story, reactive map filters, and searchable, downloadable records.
 - WigglyStuff neighborhood ridges that drive the map and comparison, plus an optional five-stop guided tour. The ridges share one count scale and support keyboard selection; bundled widget JavaScript needs no external CDN.
 - Explicit administrative-data limitations, source attribution, marimo feedback, and an agentic-tool reflection.
 
