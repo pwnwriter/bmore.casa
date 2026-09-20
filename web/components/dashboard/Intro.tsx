@@ -61,7 +61,7 @@ export default function Intro({ summary, onExplore }: { summary: Summary | null;
           </button>
           <div className={`grid w-full gap-3 text-left ${MOLAB_URL ? "sm:grid-cols-2" : "max-w-xs"}`}>
             <NotebookLink href={NOTEBOOK_URL} place="casa" note="Hosted right here. Opens instantly, nothing to install." />
-            {MOLAB_URL && <NotebookLink href={MOLAB_URL} place="molab" note="The same notebook, running on marimo's molab cloud." external />}
+            {MOLAB_URL && <NotebookLink href={MOLAB_URL} place="molab" note="On marimo's molab cloud. Read the code, run it, fork it." external />}
           </div>
         </div>
         <p className="rise mt-6 text-[11px] text-slate-500" style={{ animationDelay: "0.9s" }}>

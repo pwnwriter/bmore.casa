@@ -5,7 +5,7 @@ six Open Baltimore layers. It is the project's DSAI x marimo entry and works on 
 No API key is required. Package installation needs internet; the default visualizations use local data without a
 street-tile service.
 
-**Open it without installing anything:** [bmore.casa/notebook](https://bmore.casa/notebook/) (hosted with the web app) or [on molab](https://molab.marimo.io/notebooks/nb_ThUzURg3SKsod1RDYv1Vm9/app).
+**Open it without installing anything:** [bmore.casa/notebook](https://bmore.casa/notebook/) (hosted with the web app) or [on molab](https://molab.marimo.io/notebooks/nb_ThUzURg3SKsod1RDYv1Vm9).
 
 ## Run
 
