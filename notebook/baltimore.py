@@ -197,7 +197,7 @@ def _(
 
     _fig = make_subplots(
         rows=1, cols=2, horizontal_spacing=0.1,
-        subplot_titles=["Open notices in the snapshot, by issue year", "Recorded activity: demolitions and rehab permits"],
+        subplot_titles=["Open notices · issue year", "Demolitions & rehab permits"],
     )
     _age = vacant.group_by("year").len().sort("year")
     _fig.add_trace(
@@ -218,6 +218,30 @@ def _(
     _fig.update_xaxes(gridcolor=GRID)
     _fig.update_yaxes(gridcolor=GRID, rangemode="tozero")
     _fig.update_annotations(font_size=12)
+    # Frames reveal recorded years; axes remain fixed to avoid misleading rescaling.
+    _play_years = list(range(int(_age["year"].min()), int(_age["year"].max()) + 1))
+    _traces = list(_fig.data)
+    _fig.frames = [go.Frame(name=str(_year), data=[
+        type(_trace)(x=[x for x in _trace.x if x <= _year],
+                     y=[y for x, y in zip(_trace.x, _trace.y) if x <= _year])
+        for _trace in _traces], traces=[0, 1, 2]) for _year in _play_years]
+    _fig.update_xaxes(range=[_play_years[0] - 0.5, _play_years[-1] + 0.5])
+    _fig.update_yaxes(range=[0, max(_age["len"]) * 1.12], row=1, col=1)
+    _fig.update_yaxes(range=[0, max(max(t.y) for t in _traces[1:]) * 1.12], row=1, col=2)
+    _fig.update_layout(
+        height=440, margin=dict(l=45, r=20, t=50, b=125),
+        legend=dict(orientation="h", x=0, y=1.22, font=dict(size=11)),
+        updatemenus=[dict(type="buttons", direction="left", x=0, y=-0.12,
+            bgcolor="#14405a", font=dict(color="#ffffff"), showactive=False,
+            buttons=[dict(label="▶ Play / Replay", method="animate", args=[None,
+                dict(mode="immediate", frame=dict(duration=500, redraw=True), transition=dict(duration=0), fromcurrent=False)]),
+                dict(label="Pause", method="animate", args=[[None],
+                dict(mode="immediate", frame=dict(duration=0, redraw=False), transition=dict(duration=0))])])],
+        sliders=[dict(active=len(_play_years)-1, x=0.36, len=0.64, y=-0.10,
+            currentvalue=dict(prefix="Through "), pad=dict(t=0),
+            steps=[dict(label=str(y), method="animate", args=[[str(y)],
+                dict(mode="immediate", frame=dict(duration=0, redraw=True), transition=dict(duration=0))]) for y in _play_years])],
+    )
 
     mo.vstack(
         [
@@ -250,6 +274,7 @@ def _(
                 """
             ),
             _fig,
+            mo.md("**Play the data story:** reveal records by year, pause, or scrub the slider. Axes stay fixed. This animates a saved snapshot—not live conditions or historical vacancy totals."),
         ]
     )
     return
