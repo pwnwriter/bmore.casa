@@ -26,6 +26,12 @@ city demolitions and building permits — built for HopHacks 2026 on real Baltim
 ![marimo](https://img.shields.io/badge/marimo-0.24-1c7361?style=flat-square)
 ![Polars](https://img.shields.io/badge/Polars-1.x-0075ff?style=flat-square&logo=polars&logoColor=white)
 ![DuckDB](https://img.shields.io/badge/DuckDB-1.x-fff000?style=flat-square&logo=duckdb&logoColor=black)
+<br>
+[![Built with Gemini](https://img.shields.io/badge/built%20with-Gemini-8e75b2?style=flat-square&logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![Voiced by ElevenLabs](https://img.shields.io/badge/voiced%20by-ElevenLabs-000000?style=flat-square&logo=elevenlabs&logoColor=white)](https://elevenlabs.io)
+[![3D tiles via Cesium ion](https://img.shields.io/badge/3D%20tiles-Cesium%20ion-6caddf?style=flat-square&logo=cesium&logoColor=white)](https://cesium.com/ion)
+[![Notebook: marimo](https://img.shields.io/badge/notebook-marimo-1c7361?style=flat-square)](https://marimo.io)
+[![Built with Cursor](https://img.shields.io/badge/built%20with-Cursor-000000?style=flat-square&logo=cursor&logoColor=white)](https://cursor.com)
 
 [**Live app**](https://bmore.casa) ·
 [Quick start](#quick-start) ·
