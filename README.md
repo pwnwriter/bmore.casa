@@ -32,7 +32,9 @@ city demolitions and building permits — built for HopHacks 2026 on real Baltim
 [Data sources](#data-sources) ·
 [Pipeline](#how-the-pipeline-works) ·
 [Findings](#verified-patterns) ·
-[Notebook](notebook/README.md)
+[Notebook (hosted)](https://bmore.casa/notebook/) ·
+[Notebook (molab)](https://molab.marimo.io/notebooks/nb_ThUzURg3SKsod1RDYv1Vm9/app) ·
+[Notebook docs](notebook/README.md)
 
 </div>
 

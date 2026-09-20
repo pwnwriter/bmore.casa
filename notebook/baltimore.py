@@ -10,16 +10,14 @@
 #     "pyarrow>=17",
 # ]
 # ///
-"""bmore.casa - a reactive civic-data story about vacancy and reinvestment.
+"""Baltimore Reborn - a reactive civic-data story about vacancy and reinvestment.
 
 Run from a fresh clone (the cleaned Parquet files ship with the repo):
 
-    uvx marimo run --sandbox notebook/baltimore.py     # read it as an app
-    uvx marimo edit --sandbox notebook/baltimore.py    # read it with the code
+    uvx marimo run --sandbox notebooks/baltimore.py     # read it as an app
+    uvx marimo edit --sandbox notebooks/baltimore.py    # read it with the code
 
-For a standalone copy or molab fork, upload baltimore-data.zip beside this file.
-The notebook unpacks the bundled snapshot automatically. No API keys are needed;
-internet is only needed to install packages or enable the optional street basemap.
+No API keys and no network access are needed.
 """
 
 import marimo
@@ -27,7 +25,7 @@ import marimo
 __generated_with = "0.24.2"
 app = marimo.App(
     width="medium",
-    app_title="bmore.casa - civic data notebook",
+    app_title="Baltimore Reborn - civic data notebook",
 )
 
 
@@ -50,53 +48,28 @@ def _():
 
 @app.cell
 def _(json, mo, pl):
-    from zipfile import BadZipFile as _BadZipFile, ZipFile as _ZipFile
+    ROOT = mo.notebook_dir()
+    if not (ROOT / "data" / "processed").exists():
+        ROOT = ROOT.parent
+    PROCESSED = ROOT / "data" / "processed"
+    PUBLIC = ROOT / "public" / "data"
 
-    _notebook_dir = mo.notebook_dir()
+    # Every file read below is checked first, so a missing file is a message, never a traceback.
     _required = [
-        "data/processed/events.parquet",
-        "data/processed/neighborhoods.parquet",
-        "data/processed/vacant_open.parquet",
-        "data/processed/permits.parquet",
-        "data/processed/quality_report.json",
-        "public/data/summary.json",
-        "public/data/neighborhoods.geojson",
+        PROCESSED / "events.parquet",
+        PROCESSED / "neighborhoods.parquet",
+        PROCESSED / "vacant_open.parquet",
+        PROCESSED / "permits.parquet",
+        PROCESSED / "quality_report.json",
+        PUBLIC / "summary.json",
+        PUBLIC / "neighborhoods.geojson",
     ]
-    # In the repo, data/processed sits beside this file and public/data lives in ../web;
-    # a standalone copy unpacks both from the archive into this folder.
-    _roots = (_notebook_dir, _notebook_dir.parent / "web")
-
-    def _locate(_name):
-        return next((_root / _name for _root in _roots if (_root / _name).is_file()), _notebook_dir / _name)
-
-    _missing = [_name for _name in _required if not _locate(_name).is_file()]
-    _archive = _notebook_dir / "baltimore-data.zip"
-    _archive_error = ""
-    if _missing and _archive.is_file():
-        try:
-            with _ZipFile(_archive) as _bundle:
-                # Read the complete snapshot first; extract only the seven known data paths.
-                _contents = {_name: _bundle.read(_name) for _name in _required}
-            for _name, _content in _contents.items():
-                _destination = _notebook_dir / _name
-                _destination.parent.mkdir(parents=True, exist_ok=True)
-                _destination.write_bytes(_content)
-        except (_BadZipFile, KeyError, OSError) as _error:
-            _archive_error = f"\n\nThe data archive could not be unpacked: `{_error}`. Re-upload the original archive and rerun."
-        _missing = [_name for _name in _required if not _locate(_name).is_file()]
+    _missing = [str(p.relative_to(ROOT)) for p in _required if not p.exists()]
     mo.stop(
-        bool(_missing) or bool(_archive_error),
-        mo.callout(mo.md(
-            "**Notebook data is missing.** Upload **`baltimore-data.zip`** through molab's Files sidebar "
-            "into the same folder as this notebook, then rerun. The notebook will unpack it automatically. "
-            "For a local run, keep the archive beside the notebook or use the full repository. "
-            "No account secrets or API keys are required."
-            + _archive_error
-        ), kind="danger"),
+        bool(_missing),
+        mo.callout(mo.md(f"**Processed data not found:** `{'`, `'.join(_missing)}`\n\nRun `uv run baltimore-reborn refresh` from the project root, then re-run this notebook."), kind="danger"),
     )
 
-    PROCESSED = _locate("data/processed/events.parquet").parent
-    PUBLIC = _locate("public/data/summary.json").parent
     events = pl.read_parquet(PROCESSED / "events.parquet")
     hoods = pl.read_parquet(PROCESSED / "neighborhoods.parquet")
     vacant = pl.read_parquet(PROCESSED / "vacant_open.parquet")
@@ -197,7 +170,7 @@ def _(
 
     _fig = make_subplots(
         rows=1, cols=2, horizontal_spacing=0.1,
-        subplot_titles=["Open notices · issue year", "Demolitions & rehab permits"],
+        subplot_titles=["Open notices in the snapshot, by issue year", "The city's response: demolitions vs. rehab permits"],
     )
     _age = vacant.group_by("year").len().sort("year")
     _fig.add_trace(
@@ -218,37 +191,13 @@ def _(
     _fig.update_xaxes(gridcolor=GRID)
     _fig.update_yaxes(gridcolor=GRID, rangemode="tozero")
     _fig.update_annotations(font_size=12)
-    # Frames reveal recorded years; axes remain fixed to avoid misleading rescaling.
-    _play_years = list(range(int(_age["year"].min()), int(_age["year"].max()) + 1))
-    _traces = list(_fig.data)
-    _fig.frames = [go.Frame(name=str(_year), data=[
-        type(_trace)(x=[x for x in _trace.x if x <= _year],
-                     y=[y for x, y in zip(_trace.x, _trace.y) if x <= _year])
-        for _trace in _traces], traces=[0, 1, 2]) for _year in _play_years]
-    _fig.update_xaxes(range=[_play_years[0] - 0.5, _play_years[-1] + 0.5])
-    _fig.update_yaxes(range=[0, max(_age["len"]) * 1.12], row=1, col=1)
-    _fig.update_yaxes(range=[0, max(max(t.y) for t in _traces[1:]) * 1.12], row=1, col=2)
-    _fig.update_layout(
-        height=440, margin=dict(l=45, r=20, t=50, b=125),
-        legend=dict(orientation="h", x=0, y=1.22, font=dict(size=11)),
-        updatemenus=[dict(type="buttons", direction="left", x=0, y=-0.12,
-            bgcolor="#14405a", font=dict(color="#ffffff"), showactive=False,
-            buttons=[dict(label="▶ Play / Replay", method="animate", args=[None,
-                dict(mode="immediate", frame=dict(duration=500, redraw=True), transition=dict(duration=0), fromcurrent=False)]),
-                dict(label="Pause", method="animate", args=[[None],
-                dict(mode="immediate", frame=dict(duration=0, redraw=False), transition=dict(duration=0))])])],
-        sliders=[dict(active=len(_play_years)-1, x=0.36, len=0.64, y=-0.10,
-            currentvalue=dict(prefix="Through "), pad=dict(t=0),
-            steps=[dict(label=str(y), method="animate", args=[[str(y)],
-                dict(mode="immediate", frame=dict(duration=0, redraw=True), transition=dict(duration=0))]) for y in _play_years])],
-    )
 
     mo.vstack(
         [
             mo.md(
                 """
-                # bmore.casa
-                ### A decade of open notices. Where should Baltimore look next?
+                # Baltimore Reborn
+                ### Where vacancy persists, where reinvestment is recorded - and how far the city's own records can take us
 
                 ## Executive summary
                 """
@@ -270,11 +219,10 @@ def _(
                 - **The response changed shape.** City demolitions peaked at {_h['demo_peak']:,} in {_h['demo_peak_year']} and fell to {_h['demo_last']:,} in {_h['last_full']}, while rehab permits on vacant buildings rose to {_h['rehab_peak']:,} in {_h['rehab_peak_year']}.
                 - **A permit is not an ending.** {_h['relapsed']:,} parcels carry an open notice issued *after* their rehab permit.
 
-                **Try it in five minutes:** change the notice-age cutoff → explore a neighborhood → compare two places → read the synthesis. All findings are computed from the bundled snapshot; no website or API key is needed.
+                Every number here is computed live from the data. Scroll to **Core visualization** to test these claims on any neighborhood.
                 """
             ),
             _fig,
-            mo.md("**Play the data story:** reveal records by year, pause, or scrub the slider. Axes stay fixed. This animates a saved snapshot—not live conditions or historical vacancy totals."),
         ]
     )
     return
@@ -354,7 +302,7 @@ def _(OPEN_BALTIMORE, mo, pl, quality, summary):
                 unless the rows downloaded equal the count the city's API reports.
                 """
             ),
-            mo.accordion({"Source inventory: dates, counts and parcel coverage": mo.ui.table(pl.DataFrame(_rows), selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False)}),
+            mo.ui.table(pl.DataFrame(_rows), selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False),
             mo.callout(
                 mo.md(
                     f"**The sources observe different periods.** Notices reach back to {_ds['vacant']['dateRange'][0][:4]} - but only notices that are *still open* exist in the data. "
@@ -366,12 +314,13 @@ def _(OPEN_BALTIMORE, mo, pl, quality, summary):
             mo.accordion(
                 {
                     "What each metric counts": _definitions,
-                    "Saved pipeline quality report": mo.vstack([mo.md("These checks were saved by the extraction pipeline. They are not a fresh audit of the city API; the raw-download manifest is not included in this notebook bundle."), mo.ui.table(_quality, selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False)]),
+                    "Cleaning checks, layer by layer": mo.ui.table(_quality, selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False),
                 }
             ),
         ]
     )
     return
+
 
 
 @app.cell
@@ -754,9 +703,9 @@ def _(
     make_subplots,
     mo,
     pl,
-    summary,
     year_from,
     year_to,
+    summary,
 ):
     _names = {"vacant": ACTIVITY["vacant"], "rehab": ACTIVITY["rehab"], "demolition": ACTIVITY["demolition"], "permit": ("Building permits (all categories)", "#f5b041")}
     _pair = [compare_a.value, compare_b.value]
@@ -770,10 +719,8 @@ def _(
         _row = {"Metric": _label}
         for _h in _pair:
             _n = _ev.filter((pl.col("neighborhood") == _h) & (pl.col("layer") == _layer)).height
-            _dates = summary["datasets"][_layer]["dateRange"]
-            _observed = year_to >= int(_dates[0][:4]) and year_from <= int(_dates[1][:4])
-            _row[f"{_h} - records"] = _n if _observed else None
-            _row[f"{_h} - per 1k parcels"] = round(1000 * _n / _parcels[_h], 1) if _observed and _parcels.get(_h) else None
+            _row[f"{_h} - records"] = _n
+            _row[f"{_h} - per 1k parcels"] = round(1000 * _n / _parcels[_h], 1) if _parcels.get(_h) else None
         _table.append(_row)
 
     _fig = make_subplots(rows=2, cols=2, subplot_titles=[v[0] for v in _names.values()], vertical_spacing=0.16, horizontal_spacing=0.08)
@@ -782,8 +729,8 @@ def _(
         for _j, _h in enumerate(_pair):
             _s = dict(_ev.filter((pl.col("neighborhood") == _h) & (pl.col("layer") == _layer)).group_by("year").agg(pl.len()).rows())
             _fig.add_trace(
-                go.Scatter(x=_years, y=[1000 * _s.get(y, 0) / _parcels[_h] if _parcels.get(_h) and int(summary["datasets"][_layer]["dateRange"][0][:4]) <= y <= int(summary["datasets"][_layer]["dateRange"][1][:4]) else None for y in _years], mode="lines+markers", name=_h, legendgroup=_h, showlegend=_i == 0,
-                           line=dict(color="#7be7f5" if _j == 0 else "#f0c987", width=2), marker=dict(size=5), hovertemplate="%{x}: %{y:.1f} records / 1,000 parcels<extra>" + _h + "</extra>"),
+                go.Scatter(x=_years, y=[_s.get(y, 0) if int(summary["datasets"][_layer]["dateRange"][0][:4]) <= y <= int(summary["datasets"][_layer]["dateRange"][1][:4]) else None for y in _years], mode="lines+markers", name=_h, legendgroup=_h, showlegend=_i == 0,
+                           line=dict(color="#7be7f5" if _j == 0 else "#f0c987", width=2), marker=dict(size=5), hovertemplate="%{x}: %{y:,}<extra>" + _h + "</extra>"),
                 row=_i // 2 + 1, col=_i % 2 + 1,
             )
     _fig.update_layout(height=520, margin=dict(l=40, r=20, t=60, b=30), legend=dict(orientation="h", y=1.13, font=dict(size=12)), **DARK)
@@ -794,13 +741,13 @@ def _(
     _same = compare_a.value == compare_b.value
     mo.vstack(
         [
-            mo.md("### Compare two neighborhoods fairly\nEach chart shows records per 1,000 parcels, so neighborhood size does not drive the comparison."),
+            mo.md("### Compare two neighborhoods"),
             mo.hstack([compare_a, compare_b], justify="start", gap=2),
             mo.callout("Pick two different neighborhoods to compare.", kind="warn") if _same else mo.ui.table(pl.DataFrame(_table), selection=None, pagination=False, show_column_summaries=False, show_data_types=False, show_download=False),
             _fig,
             mo.md(
                 f"_Records dated {year_from}-{year_to}. Rates divide by each neighborhood's parcel count ({_parcels.get(_pair[0], 0):,} vs {_parcels.get(_pair[1], 0):,}) - they are rates of **records**, and a parcel can have many permits. "
-                "Gaps and blank table values mean the source does not cover that period. Lines start where each source starts (demolitions 2011, rehab 2015, permits 2019). Differences are descriptive: these records cannot say *why* two places differ._"
+                "Lines start where each source starts (demolitions 2011, rehab 2015, permits 2019). Differences are descriptive: these records cannot say *why* two places differ._"
             ),
         ]
     )
@@ -834,21 +781,32 @@ def _(ACTIVITY, DARK, GRID, go, headline, mo, pl, ranking, year_from, year_to):
         f"""
         ## Insight synthesis
 
-        **Where to investigate:** in your selected window ({year_from}-{year_to}), {_rank_text}.
-        Ranking uses neighborhoods with at least 100 parcels to reduce the instability of tiny denominators.
+        **1 · Vacancy in Baltimore is old, and it is concentrated.** Of **{_h['open']:,} open notices**, {_h['old']:,} ({_h['old'] / _h['open']:.0%}) were issued
+        before 2016 - the oldest on {_h['oldest']} - while {_h['recent']:,} ({_h['recent'] / _h['open']:.0%}) date from 2022 or later. Ten of {_h['n_hoods']} neighborhoods,
+        led by {_h['top_hood']}, hold {_h['top10_share']:.0%} of all open notices; {_h['hoods_without']} neighborhoods have none. In the window you selected
+        ({year_from}-{year_to}), {_rank_text}.
 
-        **Does recorded rehab overlap with vacancy?** Each dot below is one neighborhood ({_rho_text}).
-        Hover to find places with similar notice rates but different rehab activity. The rehab source itself is limited
-        to buildings with vacancy notices, and both axes share a parcel denominator: this association cannot establish an intervention's effect.
+        **2 · The city's response has changed shape.** Completed city demolitions peak at **{_h['demo_peak']:,} in {_h['demo_peak_year']}** and fall to {_h['demo_last']:,}
+        in {_h['last_full']}. Rehab permits on vacant buildings move the other way: from {_h['rehab_first']:,} in {_h['rehab_first_year']} to **{_h['rehab_peak']:,} in {_h['rehab_peak_year']}**.
+        Recorded rehab permits became more numerous relative to completed city demolitions; permits do not establish completed reuse, and these records do not explain the change.
 
-        **Follow up on records, not assumptions.** {_h['relapsed']:,} parcels have an open notice issued after a rehab permit.
-        Those addresses are leads for inspection, not proof that renovation failed. Across the broader permit layer,
-        {_h['permit_records']:,} records touch {_h['permit_parcels']:,} parcels; {_h['permit_mods']:,} are modifications.
+        **3 · A permit is not an ending.** Matching on the parcel ID (`BLOCKLOT`), **{_h['relapsed']:,} parcels** have a rehab permit issued *before* the vacancy
+        notice that is open in the snapshot - a sequence of administrative records, not proof that a building returned to use and became vacant again. The data cannot say whether those rehabs were ever finished;
+        it can say exactly where to go and look.
+
+        **4 · Permits are not buildings.** {_h['permit_records']:,} permit records touch only {_h['permit_parcels']:,} distinct parcels, and {_h['permit_mods']:,} are
+        modifications of an earlier permit - which is why every rate above is labelled *records per 1,000 parcels*.
+
+        **5 · Test the overlap instead of assuming it.** Each dot below is a neighborhood in the selected date window ({_rho_text}).
+        The rehab layer only covers buildings with a vacancy notice, so an association is partly built into the source definition.
+        Both axes also share a parcel denominator. This is a descriptive comparison, not evidence of an intervention's effect or a rehab success rate.
+        Hover to identify neighborhoods with similar vacancy rates but different recorded rehab activity.
         """
     )
     _so_what = mo.md(
         """
-        **Next action:** choose an older notice cohort, inspect the neighborhood bars, and export its records for a community association or reporter to investigate. The notebook identifies where to ask questions; site visits and completion records are needed to establish outcomes.
+        **So what?** Reinvestment is being recorded in the hardest-hit neighborhoods, yet thousands of currently open notices were issued before 2016. An outreach
+        team, a community association or a reporter can use the map above to list those addresses in minutes.
         """
     )
     mo.vstack([_text, _fig, _so_what])
@@ -873,7 +831,7 @@ def _(mo, quality):
         - **A custom notice-age widget.** Clickable cohort bars are keyboard-accessible buttons; a synced year threshold drives the cohort chart and downloadable record table. It bundles a distribution and a filter into one control, using [marimo anywidget support](https://docs.marimo.io/api/inputs/anywidget/).
         - **Reactivity replaced callbacks.** One `selection` dataframe feeds the stat tiles, map, timeline and table; changing a control re-runs exactly the cells that depend on it. The custom widget handles browser clicks; marimo handles the downstream Python recomputation.
         - **The plot is an input.** Wrapping the map in `mo.ui.plotly` turns a lasso on the map into a Python value, so the record table follows the map with three lines of code.
-        - **A notebook that is a Python file.** It diffs cleanly in git, an AI agent can edit it like any module, and `python baltimore.py` runs it top to bottom - our pre-submission "no errors" check. PEP 723 metadata plus `--sandbox` makes it reproducible from one command.
+        - **A notebook that is a Python file.** It diffs cleanly in git, an AI agent can edit it like any module, and `python notebooks/baltimore.py` runs it top to bottom - our pre-submission "no errors" check. PEP 723 metadata plus `--sandbox` makes it reproducible from one command.
         - **`mo.stop` and `mo.accordion`** let us fail with a message instead of a traceback, and keep a five-minute read short without deleting the detail.
         - **Friction.** Names shared across cells need one definition. Local plotting variables use `_` prefixes to avoid collisions, and the charts carry explicit backgrounds to stay readable across notebook themes.
         """
@@ -907,17 +865,14 @@ def _(mo, quality):
                 - **Snapshot the open-notice layer daily.** These extracts omit closed notices. Repeated snapshots could track entries and exits from the open list; inspection or closure records would still be needed to explain an exit.
                 - **A custom `anywidget` 3D map** (MapLibre + deck.gl) so that clicking a neighborhood on the map drives the whole notebook.
                 - **Join 311 requests, tax-sale and receivership layers** from Open Baltimore to follow a parcel from complaint to outcome.
+                - The same pipeline already powers a companion 3D web app (`bun run dev` in this repository).
 
-                ### Companion web experience · [bmore.casa](https://bmore.casa)
-
-                The repository also includes a **MapLibre + deck.gl** web app, live at [bmore.casa](https://bmore.casa), with a 3D hexagon view,
-                timeline playback, parcel exploration and neighborhood comparisons. It offers another way to explore
-                the same processed data. **This notebook is the complete, independently usable submission**:
-                its findings, interactive controls, source documentation and downloadable records are all here.
-
+                ### Feedback on marimo
                 """
             ),
-            mo.accordion({"Feedback on marimo: what worked and what was difficult": _marimo, "Working with agentic tools: contributions and checks": _agents}),
+            _marimo,
+            mo.md("### Working with agentic tools"),
+            _agents,
         ]
     )
     return
@@ -925,3 +880,4 @@ def _(mo, quality):
 
 if __name__ == "__main__":
     app.run()
+
