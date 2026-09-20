@@ -908,13 +908,12 @@ def _(mo, quality):
                 - **A custom `anywidget` 3D map** (MapLibre + deck.gl) so that clicking a neighborhood on the map drives the whole notebook.
                 - **Join 311 requests, tax-sale and receivership layers** from Open Baltimore to follow a parcel from complaint to outcome.
 
-                ### Companion web experience · hosting planned
+                ### Companion web experience · [bmore.casa](https://bmore.casa)
 
-                The repository also includes a **MapLibre + deck.gl** web app with a 3D hexagon view,
+                The repository also includes a **MapLibre + deck.gl** web app, live at [bmore.casa](https://bmore.casa), with a 3D hexagon view,
                 timeline playback, parcel exploration and neighborhood comparisons. It offers another way to explore
                 the same processed data. **This notebook is the complete, independently usable submission**:
                 its findings, interactive controls, source documentation and downloadable records are all here.
-                A public web link and demo video can be added once they are available.
 
                 """
             ),

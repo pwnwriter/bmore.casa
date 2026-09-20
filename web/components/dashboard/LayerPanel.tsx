@@ -1,6 +1,7 @@
 "use client";
 
-import { BarChart3, Building2, CircleDot, Database, Eye, Loader2 } from "lucide-react";
+import { BarChart3, BookOpen, Building2, CircleDot, Database, Eye, Loader2 } from "lucide-react";
+import { NOTEBOOK_URL } from "@/lib/site";
 import SearchBox, { type SearchHit } from "./SearchBox";
 import type { ViewMode } from "@/components/map/CityMap";
 import { LAYER_ORDER, LAYERS, type LayerKey } from "@/lib/geo/constants";
@@ -35,8 +36,13 @@ export default function LayerPanel(props: Props) {
   return (
     <div className="glass panel-in thin-scroll flex max-h-full flex-col overflow-y-auto rounded-2xl">
       <div className="border-b border-white/5 px-4 pb-3 pt-4">
-        <div className="font-display text-[15px] font-semibold tracking-[0.18em] text-slate-50">
-          BMORE<span className="text-cyan-300">.CASA</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-display text-[15px] font-semibold tracking-[0.18em] text-slate-50">
+            BMORE<span className="text-cyan-300">.CASA</span>
+          </div>
+          <a href={NOTEBOOK_URL} className="flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-[11px] text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-100">
+            <BookOpen size={12} /> Notebook
+          </a>
         </div>
         <div className="mt-0.5 text-[11px] text-slate-400">Housing records from Baltimore City open data</div>
         <div className="mt-3">

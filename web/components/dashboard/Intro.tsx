@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Box } from "lucide-react";
 import { LAYER_ORDER, LAYERS } from "@/lib/geo/constants";
 import { fmt } from "@/lib/data/stats";
 import type { Summary } from "@/lib/data/types";
+import { NOTEBOOK_URL } from "@/lib/site";
 
 export default function Intro({ summary, onExplore }: { summary: Summary | null; onExplore: () => void }) {
   return (
@@ -30,15 +31,31 @@ export default function Intro({ summary, onExplore }: { summary: Summary | null;
           ))}
         </div>
 
-        <button
-          onClick={onExplore}
-          disabled={!summary}
-          className="rise pointer-events-auto group mt-10 inline-flex items-center gap-2.5 rounded-full border border-cyan-300/40 bg-cyan-300/10 px-7 py-3 text-sm font-medium tracking-wide text-cyan-50 shadow-[0_0_40px_-8px_rgba(77,214,232,0.55)] transition hover:bg-cyan-300/20 disabled:opacity-50"
-          style={{ animationDelay: "0.75s" }}
-        >
-          {summary ? "Explore Baltimore" : "Loading city records…"}
-          <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />
-        </button>
+        <div className="rise pointer-events-auto mx-auto mt-10 grid max-w-2xl gap-3 text-left sm:grid-cols-2" style={{ animationDelay: "0.75s" }}>
+          <button
+            onClick={onExplore}
+            disabled={!summary}
+            className="group flex items-center gap-3.5 rounded-2xl border border-cyan-300/40 text-left bg-cyan-300/10 px-5 py-4 shadow-[0_0_40px_-8px_rgba(77,214,232,0.55)] backdrop-blur-sm transition hover:bg-cyan-300/20 disabled:opacity-50"
+          >
+            <Box size={22} className="shrink-0 text-cyan-200" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium tracking-wide text-cyan-50">{summary ? "Explore the 3D map" : "Loading city records…"}</span>
+              <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-400">Every record on the city, with a timeline, search and neighborhood comparison</span>
+            </span>
+            <ArrowRight size={16} className="shrink-0 text-cyan-100 transition group-hover:translate-x-0.5" />
+          </button>
+          <a
+            href={NOTEBOOK_URL}
+            className="group flex items-center gap-3.5 rounded-2xl border border-white/15 bg-white/5 px-5 py-4 backdrop-blur-sm transition hover:border-white/30 hover:bg-white/10"
+          >
+            <BookOpen size={22} className="shrink-0 text-slate-200" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium tracking-wide text-slate-50">Read the data notebook</span>
+              <span className="mt-0.5 block text-[11.5px] leading-snug text-slate-400">The five-minute story: findings, methods and interactive charts in marimo</span>
+            </span>
+            <ArrowUpRight size={16} className="shrink-0 text-slate-300 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </a>
+        </div>
         <p className="rise mt-6 text-[11px] text-slate-500" style={{ animationDelay: "0.9s" }}>
           Real public records from Baltimore City DHCD. Columns show record counts, not buildings.
         </p>
